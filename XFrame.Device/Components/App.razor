@@ -1,0 +1,10 @@
+﻿<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Components.Layout.MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(Components.Layout.MainLayout)">
+            <p>Stranica nije pronađena.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

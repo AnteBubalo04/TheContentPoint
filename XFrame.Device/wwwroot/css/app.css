@@ -1,0 +1,112 @@
+﻿/* app.css - potrebne klase za QR, countdown i fade */
+
+.qr-centered {
+    position: absolute;
+    left: 50%;
+    top: 20%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    z-index: 20;
+}
+
+    .qr-centered img {
+        width: 40vmin;
+        height: 40vmin;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .qr-centered p {
+        margin-top: 8px;
+        color: white;
+        font-size: 3.2vmin;
+    }
+
+    .qr-centered.faded {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(0.96);
+        pointer-events: none;
+    }
+
+.hidden {
+    display: none !important;
+}
+
+.countdown-overlay {
+    position: absolute;
+    left: 50%;
+    top: 10%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 28px;
+    z-index: 30;
+    transition: opacity 0.2s ease;
+}
+
+    .countdown-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+body, html {
+    margin: 0;
+    height: 100%;
+    background: #000;
+}
+
+/* Ako koristiš canvas kao background layer */
+canvas#canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 0;
+    touch-action: none;
+}
+
+/* =========================
+   VIDEO LAYERING (NOVO)
+   ========================= */
+
+/* Opcionalno: ako u Blazor komponenti imaš wrapper oko svega */
+.stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+}
+
+/* Kamera + overlay videi moraju biti full-screen, stacked */
+#cameraVideo,
+#overlayLoop,
+#overlayHero {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Ako ti kamera ide preko <video> (a ne preko canvasa), stavi je iznad canvasa */
+#cameraVideo {
+    z-index: 1;
+}
+
+/* Loop overlay stalno iznad kamere */
+#overlayLoop {
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Hero overlay iznad loopa; JS pali opacity kad treba */
+#overlayHero {
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+}

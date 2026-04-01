@@ -1,0 +1,24 @@
+[build]
+publish = "bin/Release/net8.0/publish/wwwroot"
+command = "dotnet publish -c Release"
+
+[[redirects]]
+from = "/api/*"
+to = "https://booth-api-d0el.onrender.com/:splat"
+status = 200
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/json"
+
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+

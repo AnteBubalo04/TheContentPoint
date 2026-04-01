@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "XFrame.Device\\XFrame.Device.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "XFrame.Landing\\XFrame.Landing.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<WebRoot>wwwroot</WebRoot>
+		<!-- ✅ omogućuje _env.WebRootPath -->
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Include="videos\38d15249-ff8c-419b-a82c-c6e9e4808f82_hero.mp4">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	  <Content Include="videos\bb1b6615-5858-4105-adbf-089c63d26daf_hero.mp4">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Generated\photos\" />
+		<Folder Include="Generated\videos\" />
+		<Folder Include="wwwroot\photos\" />
+	</ItemGroup>
+
+	<!-- ✅ BITNO: runtime generirani videi NE SMIJU biti static web assets -->
+	<ItemGroup>
+		<!-- ✅ Ne uključuj dinamičke videe u Static Web Assets (build fingerprint) -->
+		<Content Remove="wwwroot\videos\**" />
+		<None Remove="wwwroot\videos\**" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<!-- ✅ riješi nullable warninge -->
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+</Project>

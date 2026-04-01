@@ -1,0 +1,105 @@
+﻿@page "/device"
+@using System.Net.Http.Json
+@inject IJSRuntime JS
+@inject HttpClient Http
+
+<div style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
+    <canvas id="canvas" width="1080" height="1920"></canvas>
+    <div id="countdown" class="countdown-overlay hidden">5</div>
+</div>
+
+@code {
+    private string sessionId = Guid.NewGuid().ToString();
+    private bool _initialized = false;
+
+    // pamtimo zadnji email event koji je već obrađen da se isti ne triggera stalno u loopu
+    private string _lastHandledSessionId = string.Empty;
+    private string _lastHandledEmail = string.Empty;
+
+    private class SessionResponse
+    {
+        public string SessionId { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+
+            // inicijalno registriraj session (da active postoji)
+            await Http.PostAsJsonAsync($"api/session/{sessionId}/register", new { Id = sessionId });
+
+            // nacrtaj inicijalni overlay (canvas + QR)
+            await JS.InvokeVoidAsync("drawOverlayOnly");
+
+            // pokreni polling za email (kontinuirano po active sessionu)
+            _ = PollForEmail();
+        }
+    }
+
+    private async Task PollForEmail()
+    {
+        while (true)
+        {
+            SessionResponse? active;
+            try
+            {
+                var ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                active = await Http.GetFromJsonAsync<SessionResponse>($"api/session/active?ts={ts}");
+            }
+            catch
+            {
+                await Task.Delay(1000);
+                continue;
+            }
+
+            var activeId = active?.SessionId ?? "";
+            if (string.IsNullOrWhiteSpace(activeId))
+            {
+                await Task.Delay(1000);
+                continue;
+            }
+
+            Session? session;
+            try
+            {
+                var tsS = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                session = await Http.GetFromJsonAsync<Session>($"api/session/{activeId}?ts={tsS}");
+            }
+            catch
+            {
+                await Task.Delay(1000);
+                continue;
+            }
+
+            var email = session?.Email?.Trim() ?? "";
+
+            // Ako je došao novi active session, resetiraj guard za obradu
+            if (_lastHandledSessionId != activeId)
+            {
+                _lastHandledSessionId = string.Empty;
+                _lastHandledEmail = string.Empty;
+            }
+
+            // Triggeraj flow samo kad se pojavi NOVI email event
+            // (novi session ili isti session ali novi email payload)
+            if (!string.IsNullOrWhiteSpace(email) &&
+                (_lastHandledSessionId != activeId || _lastHandledEmail != email))
+            {
+                _lastHandledSessionId = activeId;
+                _lastHandledEmail = email;
+
+                await JS.InvokeVoidAsync("startCameraWithSmoothTransition", activeId);
+            }
+
+            await Task.Delay(750);
+        }
+    }
+
+    private class Session
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+}

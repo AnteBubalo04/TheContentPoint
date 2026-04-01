@@ -1,0 +1,33 @@
+﻿@inherits LayoutComponentBase
+@namespace Booth.Device.Layout
+<div class="booth">
+    @Body
+</div>
+
+<style>
+    .booth {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: black;
+        color: white;
+        text-align: center;
+        font-family: sans-serif;
+    }
+
+    video {
+        width: 100%;
+        height: auto;
+        max-height: 90vh;
+    }
+
+    #countdown {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 5rem;
+        color: white;
+        z-index: 10;
+    }
+</style>

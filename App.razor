@@ -1,0 +1,23 @@
+﻿@using Booth.Device.Layout
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (Nav.Uri.EndsWith("/"))
+        {
+            Nav.NavigateTo("/booth/test123", forceLoad: true);
+        }
+    }
+}
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p>Stranica nije pronađena.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

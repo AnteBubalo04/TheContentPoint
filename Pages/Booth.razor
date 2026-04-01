@@ -1,0 +1,71 @@
+﻿@page "/booth/{SessionId}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@namespace Booth.Pages
+
+@if (!triggered && !thankYou)
+{
+    <h3>Scan QR code</h3>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://landinggggggggg.netlify.app/session/@SessionId&size=200x200" />
+}
+else if (thankYou)
+{
+    <h2>Hvala na korištenju XFrame!</h2>
+    <p>Fotka je uspješno poslana.</p>
+}
+else
+{
+    <h3>Smile! 📸</h3>
+    <div id="countdown" style="font-size: 48px;"></div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+}
+
+@code {
+    [Parameter] public string SessionId { get; set; }
+    private bool triggered = false;
+    private bool thankYou = false;
+
+    protected override void OnInitialized()
+    {
+        _ = Task.Run(PollSession); // ne pokreće kameru odmah
+    }
+
+    private async Task PollSession()
+    {
+        while (!triggered)
+        {
+            try
+            {
+                var result = await Http.GetAsync($"https://booth-api-d0el.onrender.com/api/session/{SessionId}");
+                if (result.IsSuccessStatusCode)
+                {
+                    triggered = true;
+                    StateHasChanged();
+                    await JS.InvokeVoidAsync("startCameraWithCountdown", SessionId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Polling error: {ex.Message}");
+            }
+
+            await Task.Delay(3000);
+        }
+    }
+
+    [JSInvokable("ShowThankYouAndReset")]
+    public async Task ShowThankYouAndReset()
+    {
+        thankYou = true;
+        StateHasChanged();
+
+        await Task.Delay(5000); // 5 sekundi zahvale
+
+        triggered = false;
+        thankYou = false;
+        StateHasChanged();
+
+        _ = Task.Run(PollSession); // ponovno čekaj novi session
+    }
+}

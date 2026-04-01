@@ -1,0 +1,7 @@
+wwwroot\css\app.css
+wwwroot\favicon.png
+wwwroot\index.html
+wwwroot\js\camera.js
+wwwroot\overlay1.webm
+wwwroot\overlay2.webm
+wwwroot\qr.png
