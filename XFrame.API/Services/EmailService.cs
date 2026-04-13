@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using XFrame.API.Models;
@@ -10,16 +8,22 @@ namespace XFrame.API.Services
     public class EmailService
     {
         private readonly SmtpSettings _settings;
+        private readonly IWebHostEnvironment _env;
+        private readonly ILogger<EmailService> _logger;
 
-        // ✅ OVDJE PROMIJENI PO POTREBI (bez mijenjanja controllera)
         private const string BrandHandle = "@brend";
         private const string BrandLink = "http://linkbrenda.com";
         private const string ProductHandle = "@thecontentpoint";
         private const string InstagramLink = "https://www.instagram.com/";
 
-        public EmailService(IOptions<SmtpSettings> config)
+        public EmailService(
+            IOptions<SmtpSettings> config,
+            IWebHostEnvironment env,
+            ILogger<EmailService> logger)
         {
             _settings = config.Value;
+            _env = env;
+            _logger = logger;
         }
 
         public async Task SendHeroMp4Email(string toEmail, string mp4Path)
@@ -30,6 +34,46 @@ namespace XFrame.API.Services
             if (string.IsNullOrWhiteSpace(mp4Path) || !File.Exists(mp4Path))
                 throw new ArgumentException("MP4 ne postoji.", nameof(mp4Path));
 
+            using var message = BuildMessage(toEmail, mp4Path);
+
+            if (CanUseSmtp())
+            {
+                using var client = new SmtpClient(_settings.Server, _settings.Port)
+                {
+                    Credentials = new NetworkCredential(_settings.Username, _settings.Password),
+                    EnableSsl = _settings.EnableSsl
+                };
+
+                await client.SendMailAsync(message);
+                return;
+            }
+
+            if (_env.IsDevelopment())
+            {
+                var pickupDirectory = ResolvePickupDirectory();
+                Directory.CreateDirectory(pickupDirectory);
+
+                using var client = new SmtpClient
+                {
+                    DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory,
+                    PickupDirectoryLocation = pickupDirectory
+                };
+
+                await client.SendMailAsync(message);
+
+                _logger.LogWarning(
+                    "SMTP credentials nisu postavljeni. Email je spremljen lokalno u pickup direktorij: {PickupDirectory}",
+                    pickupDirectory);
+
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "SMTP nije ispravno konfiguriran. Za produkciju postavi SmtpSettings:Server, Port, From, Username i Password.");
+        }
+
+        private MailMessage BuildMessage(string toEmail, string mp4Path)
+        {
             var copyText = $"{BrandHandle} {BrandLink} {ProductHandle}";
 
             var body =
@@ -51,7 +95,11 @@ After you post the Story and tag {ProductHandle}, you’ll receive a confirmatio
 Show that DM at the bar to claim your drink/gift.
 ";
 
-            using var message = new MailMessage(_settings.From, toEmail)
+            var from = string.IsNullOrWhiteSpace(_settings.From)
+                ? throw new InvalidOperationException("SmtpSettings:From nije postavljen.")
+                : _settings.From;
+
+            var message = new MailMessage(from, toEmail)
             {
                 Subject = "Your video + Instagram Story steps",
                 Body = body,
@@ -59,14 +107,28 @@ Show that DM at the bar to claim your drink/gift.
             };
 
             message.Attachments.Add(new Attachment(mp4Path, "video/mp4"));
+            return message;
+        }
 
-            using var client = new SmtpClient(_settings.Server, _settings.Port)
-            {
-                Credentials = new NetworkCredential(_settings.Username, _settings.Password),
-                EnableSsl = _settings.EnableSsl
-            };
+        private bool CanUseSmtp()
+        {
+            return !string.IsNullOrWhiteSpace(_settings.Server)
+                   && _settings.Port > 0
+                   && !string.IsNullOrWhiteSpace(_settings.From)
+                   && !string.IsNullOrWhiteSpace(_settings.Username)
+                   && !string.IsNullOrWhiteSpace(_settings.Password);
+        }
 
-            await client.SendMailAsync(message);
+        private string ResolvePickupDirectory()
+        {
+            var configured = _settings.PickupDirectory?.Trim();
+
+            if (string.IsNullOrWhiteSpace(configured))
+                configured = "Generated/emails";
+
+            return Path.IsPathRooted(configured)
+                ? configured
+                : Path.Combine(_env.ContentRootPath, configured);
         }
     }
 }

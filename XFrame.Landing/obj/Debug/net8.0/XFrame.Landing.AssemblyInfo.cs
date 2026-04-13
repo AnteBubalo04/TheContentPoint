@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("XFrame.Landing")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f3b8fbd4af43d191cb06b5de2497ec426dc82cf7")]
 [assembly: System.Reflection.AssemblyProductAttribute("XFrame.Landing")]
 [assembly: System.Reflection.AssemblyTitleAttribute("XFrame.Landing")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
