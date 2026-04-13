@@ -1,65 +1,42 @@
-﻿using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
-using XFrame.API.Models;
+﻿using XFrame.API.Models;
 using XFrame.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-
-builder.Services.Configure<SmtpSettings>(
-    builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<VideoComposerService>();
 
-builder.Services.AddSingleton<IHeroRenderQueue, HeroRenderQueue>();
-builder.Services.AddHostedService<HeroRenderWorker>();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
-
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    options.AddFixedWindowLimiter("session-policy", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 20;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        limiterOptions.QueueLimit = 5;
-    });
-});
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("FrontendCors", policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        policy
-            .WithOrigins(
-                "https://localhost:7089",
-                "http://localhost:7089",
-                "https://localhost:5141",
-                "http://localhost:5141")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
+
+app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-if (!app.Environment.IsDevelopment())
+else
 {
     app.UseHttpsRedirection();
 }
+
+app.UseAuthorization();
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -71,18 +48,6 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
-app.UseRouting();
-
-app.UseCors("FrontendCors");
-
-app.UseRateLimiter();
-
-app.UseAuthorization();
-
-app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
-
-app.MapControllers().RequireRateLimiting("session-policy");
+app.MapControllers();
 
 app.Run();

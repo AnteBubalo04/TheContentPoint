@@ -16,7 +16,13 @@ else
 
 @code {
     private string email = string.Empty;
+    private string sessionId = string.Empty;
     private bool submitted = false;
+
+    private class SessionResponse
+    {
+        public string SessionId { get; set; } = string.Empty;
+    }
 
     private class Session
     {
@@ -24,34 +30,68 @@ else
         public string Email { get; set; } = string.Empty;
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshActiveSessionId();
+    }
+
+    private async Task RefreshActiveSessionId()
+    {
+        try
+        {
+            var ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var response = await Http.GetFromJsonAsync<SessionResponse>($"api/session/active?ts={ts}");
+
+            sessionId = response?.SessionId ?? "";
+            Console.WriteLine($"[LANDING] Dohvaćen sessionId: {sessionId}");
+        }
+        catch (Exception ex)
+        {
+            sessionId = string.Empty;
+            Console.WriteLine($"[LANDING ERROR] Ne mogu dohvatiti sessionId: {ex.Message}");
+        }
+    }
+
     private async Task SubmitEmail()
     {
-        var normalizedEmail = email.Trim();
-
-        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        if (string.IsNullOrWhiteSpace(email))
         {
             Console.WriteLine("[LANDING ERROR] Email je prazan.");
             return;
         }
 
+        // UVIJEK prije slanja povuci trenutni active session
+        await RefreshActiveSessionId();
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            Console.WriteLine("[LANDING ERROR] sessionId je prazan.");
+            return;
+        }
+
         var payload = new Session
         {
-            Email = normalizedEmail
+            Id = sessionId,
+            Email = email
         };
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/session/active/email", payload);
+            var response = await Http.PostAsJsonAsync($"api/session/{sessionId}/email", payload);
 
             if (response.IsSuccessStatusCode)
             {
                 submitted = true;
-                Console.WriteLine("[LANDING] Email poslan za trenutno aktivni session.");
+                Console.WriteLine($"[LANDING] Email poslan za session {sessionId}");
 
-                await Task.Delay(1500);
+                await Task.Delay(5000);
 
                 email = string.Empty;
                 submitted = false;
+
+                // pripremi landing za iduće slanje tako da povuče novi active session
+                await RefreshActiveSessionId();
+
                 StateHasChanged();
             }
             else

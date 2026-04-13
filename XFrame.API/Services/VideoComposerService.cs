@@ -1,32 +1,24 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 
 namespace XFrame.API.Services
 {
     public class VideoComposerService
     {
         private readonly IWebHostEnvironment _env;
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<VideoComposerService> _logger;
 
-        private static readonly ConcurrentDictionary<string, double> _durationCache = new();
-
-        public VideoComposerService(
-            IWebHostEnvironment env,
-            IConfiguration configuration,
-            ILogger<VideoComposerService> logger)
+        public VideoComposerService(IWebHostEnvironment env)
         {
             _env = env;
-            _configuration = configuration;
-            _logger = logger;
         }
 
-        public async Task<string> CreateHeroVideoFromPhotoAsync(
-            string photoPath,
-            string outputDir,
-            CancellationToken cancellationToken = default)
+        public async Task<string> CreateHeroVideoFromPhotoAsync(string photoPath, string outputDir)
         {
             if (!File.Exists(photoPath))
                 throw new ArgumentException("Photo does not exist.", nameof(photoPath));
@@ -47,13 +39,11 @@ namespace XFrame.API.Services
             const int W = 1080;
             const int H = 1920;
 
-            var overlaySeconds = await ProbeDurationSecondsCachedAsync(overlayPath, cancellationToken);
+            var overlaySeconds = await ProbeDurationSecondsAsync(overlayPath);
             if (overlaySeconds <= 0.1)
                 throw new Exception($"Overlay duration invalid: {overlaySeconds}");
 
             var dur = overlaySeconds.ToString("0.###", CultureInfo.InvariantCulture);
-
-            var ffmpegThreads = GetConfiguredThreadCount();
 
             var filter =
                 $"[0:v]" +
@@ -72,7 +62,6 @@ namespace XFrame.API.Services
 
             var args =
                 $"-y -hide_banner " +
-                $"-threads {ffmpegThreads} " +
                 $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
                 $"-c:v libvpx-vp9 -i \"{overlayPath}\" " +
                 $"-t {dur} " +
@@ -85,7 +74,7 @@ namespace XFrame.API.Services
 
             var psi = new ProcessStartInfo
             {
-                FileName = ResolveExecutable("VideoTools:FFmpegPath", "ffmpeg"),
+                FileName = "ffmpeg",
                 Arguments = args,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -95,25 +84,20 @@ namespace XFrame.API.Services
 
             using var proc = new Process { StartInfo = psi };
 
-            try
-            {
-                proc.Start();
-                TryLowerProcessPriority(proc);
-            }
+            try { proc.Start(); }
             catch (Exception ex)
             {
-                throw new Exception($"Ne mogu pokrenuti ffmpeg. Postavi VideoTools:FFmpegPath ili dodaj ffmpeg u PATH. Error: {ex.Message}");
+                throw new Exception($"Ne mogu pokrenuti ffmpeg. Je li u PATH-u? Error: {ex.Message}");
             }
 
             var readErrTask = proc.StandardError.ReadToEndAsync();
             var readOutTask = proc.StandardOutput.ReadToEndAsync();
 
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
 
             try
             {
-                await proc.WaitForExitAsync(linkedCts.Token);
+                await proc.WaitForExitAsync(cts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -122,20 +106,12 @@ namespace XFrame.API.Services
                 var errSoFar = await SafeTask(readErrTask);
                 var outSoFar = await SafeTask(readOutTask);
 
-                if (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-                {
-                    throw new Exception(
-                        "FFmpeg timeout. Proces je prekinut.\n" +
-                        $"ARGS:\n{args}\n\n" +
-                        $"STDERR:\n{errSoFar}\n" +
-                        $"STDOUT:\n{outSoFar}"
-                    );
-                }
-
-                throw new OperationCanceledException(
-                    "FFmpeg processing canceled.",
-                    null,
-                    cancellationToken.IsCancellationRequested ? cancellationToken : linkedCts.Token);
+                throw new Exception(
+                    "FFmpeg timeout. Proces je prekinut.\n" +
+                    $"ARGS:\n{args}\n\n" +
+                    $"STDERR:\n{errSoFar}\n" +
+                    $"STDOUT:\n{outSoFar}"
+                );
             }
 
             var stderr = await SafeTask(readErrTask);
@@ -153,36 +129,16 @@ namespace XFrame.API.Services
             }
 
             File.Move(tempPath, finalPath, overwrite: true);
-
-            _logger.LogInformation(
-                "Hero video composed successfully. Input={PhotoPath}, Overlay={OverlayPath}, Output={FinalPath}, Threads={Threads}",
-                photoPath,
-                overlayPath,
-                finalPath,
-                ffmpegThreads);
-
             return finalPath;
         }
 
-        private async Task<double> ProbeDurationSecondsCachedAsync(string path, CancellationToken cancellationToken)
-        {
-            if (_durationCache.TryGetValue(path, out var cached) && cached > 0)
-                return cached;
-
-            var duration = await ProbeDurationSecondsAsync(path, cancellationToken);
-            if (duration > 0)
-                _durationCache[path] = duration;
-
-            return duration;
-        }
-
-        private async Task<double> ProbeDurationSecondsAsync(string path, CancellationToken cancellationToken)
+        private static async Task<double> ProbeDurationSecondsAsync(string path)
         {
             var args = $"-v error -show_format -of json \"{path}\"";
 
             var psi = new ProcessStartInfo
             {
-                FileName = ResolveExecutable("VideoTools:FFprobePath", "ffprobe"),
+                FileName = "ffprobe",
                 Arguments = args,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
@@ -192,23 +148,15 @@ namespace XFrame.API.Services
 
             using var proc = new Process { StartInfo = psi };
 
-            try
-            {
-                proc.Start();
-                TryLowerProcessPriority(proc);
-            }
+            try { proc.Start(); }
             catch (Exception ex)
             {
-                throw new Exception($"Ne mogu pokrenuti ffprobe. Postavi VideoTools:FFprobePath ili dodaj ffprobe u PATH. Error: {ex.Message}");
+                throw new Exception($"Ne mogu pokrenuti ffprobe. Je li u PATH-u? Error: {ex.Message}");
             }
 
-            var jsonTask = proc.StandardOutput.ReadToEndAsync();
-            var errTask = proc.StandardError.ReadToEndAsync();
-
-            await proc.WaitForExitAsync(cancellationToken);
-
-            var json = await jsonTask;
-            var err = await errTask;
+            var json = await proc.StandardOutput.ReadToEndAsync();
+            var err = await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
 
             if (proc.ExitCode != 0)
                 throw new Exception($"ffprobe failed.\nARGS: {args}\nERR:\n{err}");
@@ -226,45 +174,9 @@ namespace XFrame.API.Services
             return 0;
         }
 
-        private int GetConfiguredThreadCount()
-        {
-            var configured = _configuration["VideoTools:FFmpegThreads"];
-
-            if (int.TryParse(configured, out var parsed) && parsed > 0)
-                return parsed;
-
-            return 1;
-        }
-
-        private void TryLowerProcessPriority(Process process)
-        {
-            try
-            {
-                process.PriorityClass = ProcessPriorityClass.BelowNormal;
-            }
-            catch
-            {
-            }
-        }
-
-        private string ResolveExecutable(string configKey, string defaultName)
-        {
-            var configured = _configuration[configKey];
-            if (!string.IsNullOrWhiteSpace(configured))
-                return configured;
-
-            var fileName = OperatingSystem.IsWindows() ? $"{defaultName}.exe" : defaultName;
-            var bundledPath = Path.Combine(_env.ContentRootPath, "tools", fileName);
-
-            if (File.Exists(bundledPath))
-                return bundledPath;
-
-            return defaultName;
-        }
-
         private static async Task<string> SafeTask(Task<string> t)
         {
-            try { return await t; } catch { return string.Empty; }
+            try { return await t; } catch { return ""; }
         }
     }
 }

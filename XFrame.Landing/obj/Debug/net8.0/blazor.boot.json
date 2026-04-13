@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "XFrame.Landing",
   "resources": {
-    "hash": "sha256-COFHhMODn//hZiwGNrd0Sc04fPrHXb9dPLeCV8qTZyg=",
+    "hash": "sha256-OyczGnwxQW1bKlEekftNMBPOtgltkc3dLbKGK6go54c=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-1QpKPnxEuRCElzcp+e3MrovJeAJkuzqKmRQay/6Aa08="
     },
@@ -209,10 +209,10 @@
       "mscorlib.wasm": "sha256-UnQd0YPXNpwbXsKqO8RAqgUVuwZsSpprfAIPpdV/y1Q=",
       "netstandard.wasm": "sha256-/QbD8JDZyYwfyk89W3qJL3HTAINDCVziZIySHIZcDhw=",
       "System.Private.CoreLib.wasm": "sha256-oBqNgH7R24FqGbaL3XnfQDqn3rk28jERFosgAryKT6U=",
-      "XFrame.Landing.wasm": "sha256-BLniIvlUWN2MpJfwwPAr+az1WVAPEzdUjUhKxonNhy0="
+      "XFrame.Landing.wasm": "sha256-K4v7ugJxDCFIXL4Izix+vCX5TgVInBAy9zZ3tGbosQc="
     },
     "pdb": {
-      "XFrame.Landing.pdb": "sha256-Z/BbSezXTUOnwXliSe5InbOwJyGiaxGR0ZP/+ttCXQE="
+      "XFrame.Landing.pdb": "sha256-ErApFvCGdVahXSiCPgbDNEjupenZTIpEpJvCj1E7yOE="
     }
   },
   "cacheBootResources": true,

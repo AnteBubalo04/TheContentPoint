@@ -622,7 +622,6 @@ C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.La
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.Landing.AssemblyInfo.cs
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.Landing.csproj.CoreCompileInputs.cache
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.Landing.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.Landing.sourcelink.json
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\webcil\Microsoft.AspNetCore.Authorization.wasm
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\webcil\Microsoft.AspNetCore.Components.wasm
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\webcil\Microsoft.AspNetCore.Components.Forms.wasm
@@ -1025,6 +1024,9 @@ C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compresse
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\e09tdotqo9-tptq2av103.gz
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\cf2j0cao7e-lfu7j35m59.gz
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\n82ayi0n4z-oyz0vx2fzb.gz
+C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\fz702db3hs-bk50v8hvae.gz
+C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\rx5b788gjg-2z4nbvt1b1.gz
+C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\rdyxkmmpzz-7grf5lee14.gz
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\staticwebassets.development.json
@@ -1035,6 +1037,3 @@ C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.La
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\refint\XFrame.Landing.dll
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\XFrame.Landing.pdb
 C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\ref\XFrame.Landing.dll
-C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\fz702db3hs-0nw3rpc39t.gz
-C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\rx5b788gjg-pwwgxtnpr7.gz
-C:\Users\Ante\Downloads\XFrameP\XFrame\XFrame.Landing\obj\Debug\net8.0\compressed\rdyxkmmpzz-947jr1vhxf.gz

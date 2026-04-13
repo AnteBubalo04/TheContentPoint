@@ -5,17 +5,18 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<WebRoot>wwwroot</WebRoot>
+		<!-- ✅ omogućuje _env.WebRootPath -->
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="videos\38d15249-ff8c-419b-a82c-c6e9e4808f82_hero.mp4">
-			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</Content>
-		<Content Include="videos\bb1b6615-5858-4105-adbf-089c63d26daf_hero.mp4">
-			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</Content>
+	  <Content Include="videos\38d15249-ff8c-419b-a82c-c6e9e4808f82_hero.mp4">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	  <Content Include="videos\bb1b6615-5858-4105-adbf-089c63d26daf_hero.mp4">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -28,9 +29,16 @@
 		<Folder Include="wwwroot\photos\" />
 	</ItemGroup>
 
+	<!-- ✅ BITNO: runtime generirani videi NE SMIJU biti static web assets -->
 	<ItemGroup>
+		<!-- ✅ Ne uključuj dinamičke videe u Static Web Assets (build fingerprint) -->
 		<Content Remove="wwwroot\videos\**" />
 		<None Remove="wwwroot\videos\**" />
 	</ItemGroup>
+
+	<PropertyGroup>
+		<!-- ✅ riješi nullable warninge -->
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
 </Project>

@@ -5,9 +5,8 @@
         try { prev.stop(); } catch { }
     }
 
-    let overlayLoopVideoA = null;
-    let overlayLoopVideoB = null;
-    let overlayHeroVideo = null;
+    let overlayLoopVideo = null;   // /overlay1.webm
+    let overlayHeroVideo = null;   // /overlay2.webm
     let qrImg = null;
     let qrEl = null;
 
@@ -17,109 +16,64 @@
     let canvasEl = null;
     let ctx = null;
 
-    const COUNTDOWN_SECONDS = 5;
-    const FADE_MS = 220;
-    const LOOP_BLEND_MS = 160;
-    const LOOP_SWAP_GUARD_MS = 80;
-    const HERO_RETURN_PREP_MS = 900;
+    let countdownInterval = null;
+    let heroStopTimeoutId = null;
+    let heroCleanupTimeoutId = null;
 
+    const COUNTDOWN_SECONDS = 5;
+    const FADE_MS = 180;
+
+    let mediaUnlocked = false;
     let currentFlowId = 0;
+
     let heroActive = false;
     let pendingHeroRequest = null;
 
-    let activeLoopVideo = null;
-    let standbyLoopVideo = null;
-    let loopSwapInProgress = false;
-    let loopSwapTimer = null;
-
-    let heroReturnPrepared = false;
-    let heroFinishedResolve = null;
-    let heroFinishedPromise = Promise.resolve();
-    let loopPrepared = false;
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function createDeferred() {
-        let resolve;
-        const promise = new Promise(r => { resolve = r; });
-        return { promise, resolve };
-    }
-
-    async function startCamera() {
-        if (cameraStream) {
-            if (cameraVideo && cameraVideo.paused) {
-                try { await cameraVideo.play(); } catch { }
-            }
-            return;
-        }
-
-        try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: "user",
-                    width: { ideal: 1080 },
-                    height: { ideal: 1920 }
-                },
-                audio: false
-            });
-
-            if (cameraVideo) {
-                cameraVideo.srcObject = cameraStream;
-                try {
-                    await cameraVideo.play();
-                } catch { }
-            }
-        } catch (e) {
-            console.error("Camera error:", e);
-            throw e;
-        }
-    }
-
-    function clearLoopSwapTimer() {
-        if (loopSwapTimer) {
-            try { clearTimeout(loopSwapTimer); } catch { }
-            loopSwapTimer = null;
-        }
-    }
-
-    function resolveHeroFinished() {
-        const resolver = heroFinishedResolve;
-        heroFinishedResolve = null;
-        if (resolver) {
-            try { resolver(); } catch { }
-        }
+    function getApiBaseUrl() {
+        const host = window.location.hostname || "localhost";
+        return window.location.protocol === "https:"
+            ? `https://${host}:5001`
+            : `http://${host}:5000`;
     }
 
     function stopAll() {
-        clearLoopSwapTimer();
+        if (countdownInterval) {
+            try { clearInterval(countdownInterval); } catch { }
+            countdownInterval = null;
+        }
+
+        if (heroStopTimeoutId) {
+            try { clearTimeout(heroStopTimeoutId); } catch { }
+            heroStopTimeoutId = null;
+        }
+
+        if (heroCleanupTimeoutId) {
+            try { clearTimeout(heroCleanupTimeoutId); } catch { }
+            heroCleanupTimeoutId = null;
+        }
 
         try {
-            if (overlayLoopVideoA) overlayLoopVideoA.pause();
-            if (overlayLoopVideoB) overlayLoopVideoB.pause();
+            if (overlayLoopVideo) overlayLoopVideo.pause();
             if (overlayHeroVideo) overlayHeroVideo.pause();
         } catch { }
 
+        try {
+            if (cameraStream) {
+                const tracks = cameraStream.getTracks ? cameraStream.getTracks() : [];
+                tracks.forEach(t => { try { t.stop(); } catch { } });
+            }
+        } catch { }
+
+        cameraStream = null;
+        mediaUnlocked = false;
         heroActive = false;
         pendingHeroRequest = null;
         currentFlowId++;
-        loopSwapInProgress = false;
-        heroReturnPrepared = false;
-        loopPrepared = false;
 
         hideCountdown();
-
-        setQROpacity(1, false);
-        setLoopOpacity(overlayLoopVideoA, 0, false);
-        setLoopOpacity(overlayLoopVideoB, 0, false);
+        setQROpacity(1);
+        setLoopOpacity(1, false);
         setHeroOpacity(0, false);
-
-        activeLoopVideo = overlayLoopVideoA || null;
-        standbyLoopVideo = overlayLoopVideoB || null;
-
-        resolveHeroFinished();
-        heroFinishedPromise = Promise.resolve();
     }
 
     window[KEY] = { stop: stopAll };
@@ -166,16 +120,56 @@
 
     window.addEventListener("resize", resizeCanvas);
 
+    function drawVideoCover(targetCtx, videoEl, dx, dy, dw, dh) {
+        const vw = videoEl.videoWidth;
+        const vh = videoEl.videoHeight;
+        if (!vw || !vh) return;
+
+        const videoAR = vw / vh;
+        const destAR = dw / dh;
+
+        let sx = 0, sy = 0, sw = vw, sh = vh;
+
+        if (videoAR > destAR) {
+            sh = vh;
+            sw = Math.round(vh * destAR);
+            sx = Math.round((vw - sw) / 2);
+        } else {
+            sw = vw;
+            sh = Math.round(vw / destAR);
+            sy = Math.round((vh - sh) / 2);
+        }
+
+        targetCtx.drawImage(videoEl, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    function drawBitmapCover(targetCtx, bmp, dx, dy, dw, dh) {
+        const vw = bmp.width;
+        const vh = bmp.height;
+        if (!vw || !vh) return;
+
+        const videoAR = vw / vh;
+        const destAR = dw / dh;
+
+        let sx = 0, sy = 0, sw = vw, sh = vh;
+
+        if (videoAR > destAR) {
+            sh = vh;
+            sw = Math.round(vh * destAR);
+            sx = Math.round((vw - sw) / 2);
+        } else {
+            sw = vw;
+            sh = Math.round(vw / destAR);
+            sy = Math.round((vh - sh) / 2);
+        }
+
+        targetCtx.drawImage(bmp, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
     function createLayerVideo(id, src, zIndex, loop) {
         const v = document.getElementById(id) || document.createElement("video");
         v.id = id;
-
-        if (src) {
-            v.src = src;
-        } else {
-            v.removeAttribute("src");
-        }
-
+        v.src = v.src || src;
         v.autoplay = false;
         v.loop = loop;
         v.muted = true;
@@ -204,8 +198,9 @@
             document.body.appendChild(v);
         }
 
-        if (src) {
+        if (!v.getAttribute("data-loaded-src")) {
             v.load();
+            v.setAttribute("data-loaded-src", "1");
         }
 
         return v;
@@ -297,22 +292,61 @@
         el.classList.add("hidden");
     }
 
-    function setOpacity(el, value, animate = true, durationMs = FADE_MS) {
+    function setOpacity(el, value, animate = true) {
         if (!el) return;
-        el.style.transition = animate ? `opacity ${durationMs}ms linear` : "none";
+        el.style.transition = animate ? `opacity ${FADE_MS}ms linear` : "none";
         el.style.opacity = String(value);
     }
 
-    function setLoopOpacity(loopVideo, value, animate = true, durationMs = FADE_MS) {
-        setOpacity(loopVideo, value, animate, durationMs);
+    function setLoopOpacity(value, animate = true) {
+        setOpacity(overlayLoopVideo, value, animate);
     }
 
-    function setHeroOpacity(value, animate = true, durationMs = FADE_MS) {
-        setOpacity(overlayHeroVideo, value, animate, durationMs);
+    function setHeroOpacity(value, animate = true) {
+        setOpacity(overlayHeroVideo, value, animate);
     }
 
-    function setQROpacity(value, animate = true, durationMs = FADE_MS) {
-        setOpacity(qrEl, value, animate, durationMs);
+    function setQROpacity(value, animate = true) {
+        setOpacity(qrEl, value, animate);
+    }
+
+    function waitForVideoReady(v, timeoutMs = 5000) {
+        if (!v) return Promise.reject(new Error("video null"));
+        if (v.readyState >= 2) return Promise.resolve();
+
+        return new Promise((resolve, reject) => {
+            const t = setTimeout(() => {
+                cleanup();
+                reject(new Error("timeout waiting for video ready"));
+            }, timeoutMs);
+
+            const ok = () => { cleanup(); resolve(); };
+            const bad = () => { cleanup(); reject(new Error("video error")); };
+
+            function cleanup() {
+                clearTimeout(t);
+                v.removeEventListener("loadeddata", ok);
+                v.removeEventListener("canplay", ok);
+                v.removeEventListener("canplaythrough", ok);
+                v.removeEventListener("error", bad);
+            }
+
+            v.addEventListener("loadeddata", ok, { once: true });
+            v.addEventListener("canplay", ok, { once: true });
+            v.addEventListener("canplaythrough", ok, { once: true });
+            v.addEventListener("error", bad, { once: true });
+        });
+    }
+
+    async function ensureVideoPlaying(v) {
+        if (!v) return false;
+        try {
+            const p = v.play();
+            if (p && typeof p.then === "function") await p;
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     function ensureOverlayAndQR() {
@@ -322,25 +356,27 @@
             cameraVideo.srcObject = null;
             cameraVideo.style.opacity = "1";
             cameraVideo.style.transition = "none";
-
-            startCamera().catch(err => console.error("Initial camera start failed:", err));
         }
 
-        if (!overlayLoopVideoA) {
-            overlayLoopVideoA = createLayerVideo("xframeOverlayLoopA", "/overlay1.webm", 9998, false);
-        }
-
-        if (!overlayLoopVideoB) {
-            overlayLoopVideoB = createLayerVideo("xframeOverlayLoopB", "/overlay1.webm", 9998, false);
+        if (!overlayLoopVideo) {
+            overlayLoopVideo = createLayerVideo("xframeOverlayLoop", "/overlay1.webm", 9998, true);
+            overlayLoopVideo.onended = () => {
+                try {
+                    overlayLoopVideo.currentTime = 0;
+                    overlayLoopVideo.play();
+                } catch { }
+            };
         }
 
         if (!overlayHeroVideo) {
             overlayHeroVideo = createLayerVideo("xframeOverlayHero", "/overlay2.webm", 9999, false);
+
             overlayHeroVideo.onended = () => {
-                finalizeHeroToIdle();
+                finishFlowToIdle();
             };
+
             overlayHeroVideo.onerror = () => {
-                finalizeHeroToIdle();
+                finishFlowToIdle();
             };
         }
 
@@ -352,382 +388,287 @@
             qrImg = new Image();
             qrImg.src = "/qr.png";
         }
-
-        if (!activeLoopVideo) activeLoopVideo = overlayLoopVideoA;
-        if (!standbyLoopVideo) standbyLoopVideo = overlayLoopVideoB;
     }
 
-    async function waitForVideoReady(video, timeoutMs = 3000) {
-        if (!video) return;
-        if (video.readyState >= 2) return;
+    async function ensureCameraStarted() {
+        ensureOverlayAndQR();
 
-        await new Promise((resolve) => {
-            let done = false;
+        if (cameraStream && cameraVideo.srcObject && cameraVideo.videoWidth > 0) return true;
 
-            const finish = () => {
-                if (done) return;
-                done = true;
-                cleanup();
-                resolve();
-            };
-
-            const cleanup = () => {
-                try { video.removeEventListener("loadeddata", finish); } catch { }
-                try { video.removeEventListener("canplay", finish); } catch { }
-                try { video.removeEventListener("canplaythrough", finish); } catch { }
-                try { video.removeEventListener("loadedmetadata", finish); } catch { }
-                try { clearTimeout(timer); } catch { }
-            };
-
-            const timer = setTimeout(finish, timeoutMs);
-
-            video.addEventListener("loadeddata", finish, { once: true });
-            video.addEventListener("canplay", finish, { once: true });
-            video.addEventListener("canplaythrough", finish, { once: true });
-            video.addEventListener("loadedmetadata", finish, { once: true });
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "user",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                aspectRatio: { ideal: 16 / 9 }
+            },
+            audio: false
         });
+
+        cameraVideo.srcObject = cameraStream;
+        await cameraVideo.play();
+
+        await new Promise((resolve, reject) => {
+            const t0 = performance.now();
+            const tick = () => {
+                if (cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0) return resolve();
+                if (performance.now() - t0 > 6000) return reject(new Error("Timeout waiting for camera frames"));
+                requestAnimationFrame(tick);
+            };
+            tick();
+        });
+
+        return true;
     }
 
-    async function resetVideoToStart(video) {
-        if (!video) return;
-        try { video.pause(); } catch { }
-        try {
-            if (typeof video.fastSeek === "function") {
-                video.fastSeek(0);
-            } else {
-                video.currentTime = 0;
-            }
-        } catch { }
-        await waitForVideoReady(video, 1200);
+    async function ensureLoopReadyAndPlaying() {
+        if (!overlayLoopVideo) return false;
+
+        try { await waitForVideoReady(overlayLoopVideo, 6000); } catch { }
+
+        const ok = await ensureVideoPlaying(overlayLoopVideo);
+        return ok;
     }
 
-    async function playVideo(video) {
-        if (!video) return;
-        try {
-            video.muted = true;
-            video.playsInline = true;
-            await video.play();
-        } catch (e) {
-            console.warn("Video play failed:", e);
-        }
-    }
+    async function finishFlowToIdle() {
+        heroActive = false;
 
-    async function ensureHeroPrepared() {
-        if (!overlayHeroVideo) return;
-        await resetVideoToStart(overlayHeroVideo);
-    }
-
-    async function prepareLoopPair(force = false) {
-        ensureOverlayAndQR();
-
-        if (loopPrepared && !force) {
-            scheduleLoopSwap();
-            return;
+        if (heroStopTimeoutId) {
+            clearTimeout(heroStopTimeoutId);
+            heroStopTimeoutId = null;
         }
 
-        await waitForVideoReady(overlayLoopVideoA, 2000);
-        await waitForVideoReady(overlayLoopVideoB, 2000);
-
-        activeLoopVideo = overlayLoopVideoA;
-        standbyLoopVideo = overlayLoopVideoB;
-
-        await resetVideoToStart(activeLoopVideo);
-        await resetVideoToStart(standbyLoopVideo);
-
-        setLoopOpacity(activeLoopVideo, 1, false);
-        setLoopOpacity(standbyLoopVideo, 0, false);
-
-        await playVideo(activeLoopVideo);
-
-        loopPrepared = true;
-        scheduleLoopSwap();
-    }
-
-    function scheduleLoopSwap() {
-        clearLoopSwapTimer();
-
-        if (heroActive) return;
-        if (!activeLoopVideo || !standbyLoopVideo) return;
-
-        const duration = Number(activeLoopVideo.duration || 0);
-        const currentTime = Number(activeLoopVideo.currentTime || 0);
-
-        if (!duration || duration <= 0.2) {
-            loopSwapTimer = setTimeout(scheduleLoopSwap, 120);
-            return;
+        if (heroCleanupTimeoutId) {
+            clearTimeout(heroCleanupTimeoutId);
+            heroCleanupTimeoutId = null;
         }
-
-        const remainingMs = Math.max(0, ((duration - currentTime) * 1000) - LOOP_BLEND_MS - LOOP_SWAP_GUARD_MS);
-        loopSwapTimer = setTimeout(() => {
-            performLoopSwap().catch(err => console.warn("Loop swap failed:", err));
-        }, remainingMs);
-    }
-
-    async function performLoopSwap() {
-        if (heroActive) return;
-        if (loopSwapInProgress) return;
-        if (!activeLoopVideo || !standbyLoopVideo) return;
-
-        loopSwapInProgress = true;
-
-        const oldFront = activeLoopVideo;
-        const newFront = standbyLoopVideo;
-
-        try {
-            await resetVideoToStart(newFront);
-            setLoopOpacity(newFront, 0, false);
-            await playVideo(newFront);
-
-            await new Promise(requestAnimationFrame);
-
-            setLoopOpacity(newFront, 1, true, LOOP_BLEND_MS);
-            setLoopOpacity(oldFront, 0, true, LOOP_BLEND_MS);
-
-            await sleep(LOOP_BLEND_MS + 30);
-
-            try { oldFront.pause(); } catch { }
-            try { oldFront.currentTime = 0; } catch { }
-
-            activeLoopVideo = newFront;
-            standbyLoopVideo = oldFront;
-        } finally {
-            loopSwapInProgress = false;
-            scheduleLoopSwap();
-        }
-    }
-
-    async function drawOverlayOnly() {
-        ensureOverlayAndQR();
-        resizeCanvas();
-
-        await startCamera();
-        await prepareLoopPair();
 
         hideCountdown();
+
+        setHeroOpacity(0, true);
+        setLoopOpacity(1, true);
+        setQROpacity(1, true);
+
+        if (mediaUnlocked) {
+            ensureLoopReadyAndPlaying().catch(() => { });
+        }
+    }
+
+    async function sendCameraSnapshot(sessionId, flowId) {
+        if (!ensureCanvasAndCtx()) return;
+        if (flowId !== currentFlowId) return;
+        if (!mediaUnlocked) return;
+        if (!cameraVideo) return;
+
+        const snap = document.createElement("canvas");
+
+        const outW = cameraVideo.videoWidth || 1280;
+        const outH = cameraVideo.videoHeight || 720;
+
+        snap.width = outW;
+        snap.height = outH;
+
+        const sctx = snap.getContext("2d");
+        if (!sctx) return;
+
+        try {
+            sctx.drawImage(cameraVideo, 0, 0, outW, outH);
+        } catch {
+            return;
+        }
+
+        snap.toBlob(async blob => {
+            try {
+                if (!blob) return;
+                if (flowId !== currentFlowId) return;
+
+                const fd = new FormData();
+                fd.append("photo", blob, `${sessionId}.jpg`);
+
+                await fetch(`${getApiBaseUrl()}/api/session/${sessionId}/photo`, {
+                    method: "POST",
+                    body: fd,
+                    cache: "no-store"
+                });
+            } catch { }
+        }, "image/jpeg", 0.92);
+    }
+
+    async function playHeroNow(flowId) {
+        if (!overlayHeroVideo) return;
+        if (flowId !== currentFlowId) return;
+
+        if (heroStopTimeoutId) {
+            clearTimeout(heroStopTimeoutId);
+            heroStopTimeoutId = null;
+        }
+
+        if (heroCleanupTimeoutId) {
+            clearTimeout(heroCleanupTimeoutId);
+            heroCleanupTimeoutId = null;
+        }
+
+        await ensureVideoPlaying(overlayHeroVideo); // 🔥 KLJUČNO
+
+        if (flowId !== currentFlowId) return;
+
+        heroActive = true;
+
+        setLoopOpacity(0, true);
+        setHeroOpacity(1, true);
+
+        const durSec = overlayHeroVideo.duration;
+        const fallbackMs = 9000;
+        const heroMs = (Number.isFinite(durSec) && durSec > 0)
+            ? Math.round(durSec * 1000)
+            : fallbackMs;
+
+        heroStopTimeoutId = setTimeout(() => {
+            finishFlowToIdle();
+            heroStopTimeoutId = null;
+        }, heroMs + 300);
+    }
+
+    async function runPendingHeroIfAny() {
+        if (!pendingHeroRequest) return;
+        const req = pendingHeroRequest;
+        pendingHeroRequest = null;
+        await internalStartCameraWithSmoothTransition(req.sessionId, req.flowId, true);
+    }
+
+    async function internalStartCameraWithSmoothTransition(sessionId, flowId, fromPending = false) {
+        if (flowId !== currentFlowId) return;
+
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+
+        if (heroStopTimeoutId) {
+            clearTimeout(heroStopTimeoutId);
+            heroStopTimeoutId = null;
+        }
+
+        if (!mediaUnlocked) {
+            pendingHeroRequest = { sessionId, flowId };
+            setQROpacity(0, true);
+            return;
+        }
+
+        setQROpacity(0, true);
+
+        await ensureLoopReadyAndPlaying();
+        await playHeroNow(flowId);
+
+        if (flowId !== currentFlowId) return;
+
+        showCountdown(COUNTDOWN_SECONDS);
+
+        let t = COUNTDOWN_SECONDS;
+
+        countdownInterval = setInterval(() => {
+            if (flowId !== currentFlowId) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                return;
+            }
+
+            t--;
+
+            if (t > 0) {
+                updateCountdown(t);
+            }
+
+            if (t <= 0) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+
+                hideCountdown();
+
+                setTimeout(() => {
+                    sendCameraSnapshot(sessionId, flowId).catch(() => { });
+                }, 0);
+            }
+        }, 1000);
+    }
+
+    async function unlockMediaOnce() {
+        if (mediaUnlocked) return;
+        mediaUnlocked = true;
+
+        try { await ensureCameraStarted(); } catch { }
+        try { await ensureLoopReadyAndPlaying(); } catch { }
+
+        setLoopOpacity(1, false);
+        setHeroOpacity(0, false);
+        setQROpacity(1, false);
+
+        await runPendingHeroIfAny();
+    }
+
+    document.addEventListener("pointerdown", unlockMediaOnce, { capture: true, once: true });
+    document.addEventListener("click", unlockMediaOnce, { capture: true, once: true });
+
+    window.startCameraWithSmoothTransition = async (sessionId) => {
+        currentFlowId++;
+        const flowId = currentFlowId;
+        await internalStartCameraWithSmoothTransition(sessionId, flowId, false);
+    };
+
+    window.drawOverlayOnly = async () => {
+        currentFlowId++;
+
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+
+        if (heroStopTimeoutId) {
+            clearTimeout(heroStopTimeoutId);
+            heroStopTimeoutId = null;
+        }
+
+        if (heroCleanupTimeoutId) {
+            clearTimeout(heroCleanupTimeoutId);
+            heroCleanupTimeoutId = null;
+        }
+
+        ensureOverlayAndQR();
+
         heroActive = false;
         pendingHeroRequest = null;
-        heroReturnPrepared = false;
+
+        hideCountdown();
+
+        try { if (overlayHeroVideo) overlayHeroVideo.pause(); } catch { }
+
+        try {
+            if (mediaUnlocked) {
+                await ensureLoopReadyAndPlaying();
+            }
+        } catch { }
 
         setHeroOpacity(0, false);
+        setLoopOpacity(1, false);
+        setQROpacity(1, false);
+    };
+
+    async function boot() {
+        ensureOverlayAndQR();
+
+        const t0 = performance.now();
+        while (!getCanvas()) {
+            if (performance.now() - t0 > 5000) break;
+            await new Promise(r => setTimeout(r, 50));
+        }
+
+        resizeCanvas();
+        styleCountdownEl();
+
+        setHeroOpacity(0, false);
+        setLoopOpacity(1, false);
         setQROpacity(1, false);
     }
 
-    async function transitionIdleToHero() {
-        heroReturnPrepared = false;
-        clearLoopSwapTimer();
-
-        await ensureHeroPrepared();
-
-        setHeroOpacity(0, false);
-        await playVideo(overlayHeroVideo);
-
-        await new Promise(requestAnimationFrame);
-
-        if (activeLoopVideo) {
-            setLoopOpacity(activeLoopVideo, 0, true, FADE_MS);
-        }
-        if (standbyLoopVideo) {
-            setLoopOpacity(standbyLoopVideo, 0, false);
-        }
-
-        setHeroOpacity(1, true, FADE_MS);
-        setQROpacity(0, true, FADE_MS);
-
-        await sleep(FADE_MS + 20);
-
-        try { if (activeLoopVideo) activeLoopVideo.pause(); } catch { }
-        try { if (standbyLoopVideo) standbyLoopVideo.pause(); } catch { }
-    }
-
-    async function prepareIdleLoopForHeroReturn() {
-        if (heroReturnPrepared) return;
-
-        heroReturnPrepared = true;
-
-        activeLoopVideo = overlayLoopVideoA;
-        standbyLoopVideo = overlayLoopVideoB;
-
-        setLoopOpacity(activeLoopVideo, 0, false);
-        setLoopOpacity(standbyLoopVideo, 0, false);
-
-        try { activeLoopVideo.pause(); } catch { }
-        try {
-            if (typeof activeLoopVideo.fastSeek === "function") {
-                activeLoopVideo.fastSeek(0);
-            } else {
-                activeLoopVideo.currentTime = 0;
-            }
-        } catch { }
-
-        await waitForVideoReady(activeLoopVideo, 1200);
-        await playVideo(activeLoopVideo);
-
-        (async () => {
-            try {
-                try { standbyLoopVideo.pause(); } catch { }
-                try {
-                    if (typeof standbyLoopVideo.fastSeek === "function") {
-                        standbyLoopVideo.fastSeek(0);
-                    } else {
-                        standbyLoopVideo.currentTime = 0;
-                    }
-                } catch { }
-                await waitForVideoReady(standbyLoopVideo, 1200);
-            } catch { }
-        })();
-
-        loopPrepared = true;
-    }
-
-    async function monitorHeroForReturn(flowId) {
-        while (heroActive && flowId === currentFlowId && overlayHeroVideo) {
-            try {
-                const duration = Number(overlayHeroVideo.duration || 0);
-                const currentTime = Number(overlayHeroVideo.currentTime || 0);
-
-                if (duration > 0.2) {
-                    const remainingMs = Math.max(0, (duration - currentTime) * 1000);
-                    if (remainingMs <= HERO_RETURN_PREP_MS) {
-                        await prepareIdleLoopForHeroReturn();
-                        return;
-                    }
-                }
-            } catch {
-            }
-
-            await sleep(50);
-        }
-    }
-
-    async function finalizeHeroToIdle() {
-        if (!heroActive && !heroReturnPrepared) {
-            resolveHeroFinished();
-            return;
-        }
-
-        try {
-            await prepareIdleLoopForHeroReturn();
-
-            setLoopOpacity(activeLoopVideo, 1, true, FADE_MS);
-            setQROpacity(1, true, FADE_MS);
-            setHeroOpacity(0, true, FADE_MS);
-
-            await sleep(FADE_MS + 20);
-
-            try { overlayHeroVideo.pause(); } catch { }
-            try { overlayHeroVideo.currentTime = 0; } catch { }
-
-            heroActive = false;
-            pendingHeroRequest = null;
-            heroReturnPrepared = false;
-
-            scheduleLoopSwap();
-        } finally {
-            resolveHeroFinished();
-        }
-    }
-
-    function captureCurrentFrameDataUrl() {
-        if (!cameraVideo || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
-            return null;
-        }
-
-        const outW = 1080;
-        const outH = 1920;
-
-        const offscreen = document.createElement("canvas");
-        offscreen.width = outW;
-        offscreen.height = outH;
-
-        const c = offscreen.getContext("2d");
-        if (!c) return null;
-
-        const srcW = cameraVideo.videoWidth;
-        const srcH = cameraVideo.videoHeight;
-
-        const srcAspect = srcW / srcH;
-        const outAspect = outW / outH;
-
-        let drawW, drawH, dx, dy;
-
-        if (srcAspect > outAspect) {
-            drawH = outH;
-            drawW = srcW * (outH / srcH);
-            dx = (outW - drawW) / 2;
-            dy = 0;
-        } else {
-            drawW = outW;
-            drawH = srcH * (outW / srcW);
-            dx = 0;
-            dy = (outH - drawH) / 2;
-        }
-
-        c.drawImage(cameraVideo, dx, dy, drawW, drawH);
-
-        return offscreen.toDataURL("image/jpeg", 0.92);
-    }
-
-    async function startCameraWithSmoothTransition(sessionId) {
-        const flowId = ++currentFlowId;
-
-        if (heroActive) {
-            return null;
-        }
-
-        heroActive = true;
-        pendingHeroRequest = sessionId;
-
-        const deferred = createDeferred();
-        heroFinishedPromise = deferred.promise;
-        heroFinishedResolve = deferred.resolve;
-
-        try {
-            ensureOverlayAndQR();
-            resizeCanvas();
-
-            await startCamera();
-            await prepareLoopPair(false);
-            await transitionIdleToHero();
-
-            if (flowId !== currentFlowId) return null;
-
-            monitorHeroForReturn(flowId).catch(() => { });
-
-            showCountdown(COUNTDOWN_SECONDS);
-
-            for (let i = COUNTDOWN_SECONDS; i >= 1; i--) {
-                if (flowId !== currentFlowId) return null;
-                updateCountdown(i);
-                await sleep(1000);
-            }
-
-            hideCountdown();
-
-            if (flowId !== currentFlowId) return null;
-
-            const dataUrl = captureCurrentFrameDataUrl();
-            if (!dataUrl) {
-                throw new Error("Nije moguće captureati frame s kamere.");
-            }
-
-            return dataUrl;
-        } catch (e) {
-            console.error("startCameraWithSmoothTransition error:", e);
-            await finalizeHeroToIdle();
-            return null;
-        }
-    }
-
-    async function waitForHeroFlowToFinish() {
-        try {
-            await heroFinishedPromise;
-        } catch {
-        }
-    }
-
-    window.drawOverlayOnly = drawOverlayOnly;
-    window.startCameraWithSmoothTransition = startCameraWithSmoothTransition;
-    window.waitForHeroFlowToFinish = waitForHeroFlowToFinish;
-
-    ensureOverlayAndQR();
+    window.addEventListener("load", boot);
 })();

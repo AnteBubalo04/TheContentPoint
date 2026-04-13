@@ -9,8 +9,11 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
-                 ?? throw new InvalidOperationException("ApiBaseUrl is not configured.");
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5000";
+if (!apiBaseUrl.EndsWith("/"))
+{
+    apiBaseUrl += "/";
+}
 
 builder.Services.AddScoped(_ => new HttpClient
 {
