@@ -16,12 +16,18 @@ namespace XFrame.API.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly EmailService _emailService;
         private readonly VideoComposerService _videoComposer;
+        private readonly IHeroRenderQueue _heroRenderQueue;
 
-        public SessionController(IWebHostEnvironment env, EmailService emailService, VideoComposerService videoComposer)
+        public SessionController(
+            IWebHostEnvironment env,
+            EmailService emailService,
+            VideoComposerService videoComposer,
+            IHeroRenderQueue heroRenderQueue)
         {
             _env = env;
             _emailService = emailService;
             _videoComposer = videoComposer;
+            _heroRenderQueue = heroRenderQueue;
         }
 
         private void NoCache()
@@ -34,9 +40,23 @@ namespace XFrame.API.Controllers
         [HttpPost("{id}/register")]
         public IActionResult RegisterSession(string id)
         {
-            _sessions[id] = "";
-            _activeSessionId = id;
-            Console.WriteLine($"[API] Registriran session: {id}");
+            lock (_activeLock)
+            {
+                if (string.IsNullOrWhiteSpace(_activeSessionId))
+                {
+                    _sessions[id] = "";
+                    _activeSessionId = id;
+                    Console.WriteLine($"[API] Registriran prvi aktivni session: {id}");
+                }
+                else
+                {
+                    if (!_sessions.ContainsKey(_activeSessionId))
+                        _sessions[_activeSessionId] = "";
+
+                    Console.WriteLine($"[API] Aktivni session već postoji: {_activeSessionId} (ignoram novi register {id})");
+                }
+            }
+
             return Ok();
         }
 
@@ -57,6 +77,12 @@ namespace XFrame.API.Controllers
             if (string.IsNullOrWhiteSpace(session.Email))
                 return BadRequest("Email je prazan.");
 
+            if (string.IsNullOrWhiteSpace(_activeSessionId))
+                return BadRequest("Aktivni session ne postoji.");
+
+            if (id != _activeSessionId)
+                return BadRequest("Session nije aktivan.");
+
             _sessions[id] = session.Email;
             Console.WriteLine($"[API] Email spremljen za session {id}: {session.Email}");
             return Ok();
@@ -65,7 +91,6 @@ namespace XFrame.API.Controllers
         [HttpGet("{id}")]
         public IActionResult GetSession(string id)
         {
-            // ✅ KLJUČNO: i ovo mora biti no-cache (na nekim uređajima se GET zna cache-at)
             NoCache();
 
             if (_sessions.TryGetValue(id, out var email))
@@ -105,21 +130,18 @@ namespace XFrame.API.Controllers
                     await photo.CopyToAsync(stream);
 
                 Console.WriteLine($"[API] Slika spremljena u: {photoPath}");
-                Console.WriteLine("[API] Composing MP4 (photo + overlay2 alpha)...");
+                Console.WriteLine("[API] Queueing hero render job (photo + overlay2 alpha)...");
 
-                var mp4Path = await _videoComposer.CreateHeroVideoFromPhotoAsync(photoPath, videosDir);
+                await _heroRenderQueue.EnqueueAsync(new HeroRenderJob(
+                    id,
+                    email,
+                    photoPath
+                ));
 
-                Console.WriteLine($"[API] MP4 napravljen: {mp4Path}");
-                await _emailService.SendHeroMp4Email(email, mp4Path);
-                Console.WriteLine($"[API] Email poslan na {email} s MP4 (foto+hero).");
+                Console.WriteLine($"[API] Hero render job queued za session {id} i email {email}");
 
-                lock (_activeLock)
-                {
-                    var newId = Guid.NewGuid().ToString();
-                    _sessions[newId] = "";
-                    _activeSessionId = newId;
-                    Console.WriteLine($"[API] Kreiran novi aktivni session: {_activeSessionId}");
-                }
+                _sessions[id] = "";
+                Console.WriteLine($"[API] Session {id} ociscen za sljedeceg korisnika.");
 
                 return Ok();
             }

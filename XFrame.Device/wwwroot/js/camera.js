@@ -12,6 +12,7 @@
 
     let cameraVideo = null;
     let cameraStream = null;
+    let imageCapture = null;
 
     let canvasEl = null;
     let ctx = null;
@@ -28,6 +29,7 @@
 
     let heroActive = false;
     let pendingHeroRequest = null;
+    let captureInFlight = false;
 
     function getApiBaseUrl() {
         const host = window.location.hostname || "localhost";
@@ -65,9 +67,11 @@
         } catch { }
 
         cameraStream = null;
+        imageCapture = null;
         mediaUnlocked = false;
         heroActive = false;
         pendingHeroRequest = null;
+        captureInFlight = false;
         currentFlowId++;
 
         hideCountdown();
@@ -405,6 +409,17 @@
             audio: false
         });
 
+        try {
+            const track = cameraStream.getVideoTracks ? cameraStream.getVideoTracks()[0] : null;
+            if (track && typeof ImageCapture !== "undefined") {
+                imageCapture = new ImageCapture(track);
+            } else {
+                imageCapture = null;
+            }
+        } catch {
+            imageCapture = null;
+        }
+
         cameraVideo.srcObject = cameraStream;
         await cameraVideo.play();
 
@@ -454,44 +469,100 @@
         }
     }
 
-    async function sendCameraSnapshot(sessionId, flowId) {
-        if (!ensureCanvasAndCtx()) return;
+    async function uploadPhotoBlob(sessionId, blob, flowId) {
+        if (!blob) return;
         if (flowId !== currentFlowId) return;
-        if (!mediaUnlocked) return;
-        if (!cameraVideo) return;
 
-        const snap = document.createElement("canvas");
+        const fd = new FormData();
+        fd.append("photo", blob, `${sessionId}.jpg`);
+
+        fetch(`${getApiBaseUrl()}/api/session/${sessionId}/photo`, {
+            method: "POST",
+            body: fd,
+            cache: "no-store"
+        }).catch(() => { });
+    }
+
+    async function capturePhotoBlobFast() {
+        if (imageCapture && typeof imageCapture.takePhoto === "function") {
+            try {
+                const blob = await imageCapture.takePhoto();
+                if (blob && blob.size > 0) {
+                    return blob;
+                }
+            } catch {
+            }
+        }
+
+        if (!cameraVideo) return null;
 
         const outW = cameraVideo.videoWidth || 1280;
         const outH = cameraVideo.videoHeight || 720;
 
+        if (typeof createImageBitmap === "function") {
+            let bmp = null;
+
+            try {
+                bmp = await createImageBitmap(cameraVideo);
+
+                if (typeof OffscreenCanvas !== "undefined") {
+                    const offscreen = new OffscreenCanvas(outW, outH);
+                    const offctx = offscreen.getContext("2d", { alpha: false });
+                    if (!offctx) return null;
+
+                    offctx.drawImage(bmp, 0, 0, outW, outH);
+                    const blob = await offscreen.convertToBlob({
+                        type: "image/jpeg",
+                        quality: 0.92
+                    });
+
+                    return blob;
+                }
+            } catch {
+            } finally {
+                try { if (bmp && typeof bmp.close === "function") bmp.close(); } catch { }
+            }
+        }
+
+        const snap = document.createElement("canvas");
         snap.width = outW;
         snap.height = outH;
 
-        const sctx = snap.getContext("2d");
-        if (!sctx) return;
+        const sctx = snap.getContext("2d", { alpha: false });
+        if (!sctx) return null;
 
         try {
             sctx.drawImage(cameraVideo, 0, 0, outW, outH);
         } catch {
-            return;
+            return null;
         }
 
-        snap.toBlob(async blob => {
-            try {
-                if (!blob) return;
-                if (flowId !== currentFlowId) return;
+        return await new Promise(resolve => {
+            snap.toBlob(blob => resolve(blob || null), "image/jpeg", 0.92);
+        });
+    }
 
-                const fd = new FormData();
-                fd.append("photo", blob, `${sessionId}.jpg`);
+    async function sendCameraSnapshot(sessionId, flowId) {
+        if (flowId !== currentFlowId) return;
+        if (!mediaUnlocked) return;
+        if (!cameraVideo) return;
+        if (captureInFlight) return;
 
-                await fetch(`${getApiBaseUrl()}/api/session/${sessionId}/photo`, {
-                    method: "POST",
-                    body: fd,
-                    cache: "no-store"
-                });
-            } catch { }
-        }, "image/jpeg", 0.92);
+        captureInFlight = true;
+
+        try {
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            if (flowId !== currentFlowId) return;
+
+            const blob = await capturePhotoBlobFast();
+            if (!blob) return;
+            if (flowId !== currentFlowId) return;
+
+            uploadPhotoBlob(sessionId, blob, flowId).catch(() => { });
+        } finally {
+            captureInFlight = false;
+        }
     }
 
     async function playHeroNow(flowId) {
@@ -508,7 +579,9 @@
             heroCleanupTimeoutId = null;
         }
 
-        await ensureVideoPlaying(overlayHeroVideo); // 🔥 KLJUČNO
+        try { overlayHeroVideo.currentTime = 0; } catch { }
+
+        await ensureVideoPlaying(overlayHeroVideo);
 
         if (flowId !== currentFlowId) return;
 
@@ -637,6 +710,7 @@
 
         heroActive = false;
         pendingHeroRequest = null;
+        captureInFlight = false;
 
         hideCountdown();
 

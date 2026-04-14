@@ -6,8 +6,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
-builder.Services.AddSingleton<EmailService>();
-builder.Services.AddSingleton<VideoComposerService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<VideoComposerService>();
+
+builder.Services.AddSingleton<IHeroRenderQueue, HeroRenderQueue>();
+builder.Services.AddSingleton<IEmailDispatchQueue, EmailDispatchQueue>();
+
+builder.Services.AddHostedService<HeroRenderWorker>();
+builder.Services.AddHostedService<EmailDispatchWorker>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -1,3 +1,0 @@
-wwwroot\css\app.css
-wwwroot\favicon.png
-wwwroot\index.html

@@ -13,6 +13,17 @@ namespace XFrame.API.Services
     {
         private readonly IWebHostEnvironment _env;
 
+        private readonly SemaphoreSlim _overlayMetadataLock = new(1, 1);
+        private OverlayMetadata? _cachedOverlayMetadata;
+
+        private sealed class OverlayMetadata
+        {
+            public string Path { get; init; } = string.Empty;
+            public double DurationSeconds { get; init; }
+            public int Width { get; init; }
+            public int Height { get; init; }
+        }
+
         public VideoComposerService(IWebHostEnvironment env)
         {
             _env = env;
@@ -39,36 +50,56 @@ namespace XFrame.API.Services
             const int W = 1080;
             const int H = 1920;
 
-            var overlaySeconds = await ProbeDurationSecondsAsync(overlayPath);
-            if (overlaySeconds <= 0.1)
-                throw new Exception($"Overlay duration invalid: {overlaySeconds}");
+            var overlayMeta = await GetOverlayMetadataAsync(overlayPath);
+            if (overlayMeta.DurationSeconds <= 0.1)
+                throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
 
-            var dur = overlaySeconds.ToString("0.###", CultureInfo.InvariantCulture);
+            var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
 
-            var filter =
-                $"[0:v]" +
-                $"scale={W}:{H}:force_original_aspect_ratio=increase," +
-                $"crop={W}:{H}," +
-                $"format=rgba,setsar=1[bg];" +
+            string filter;
 
-                $"[1:v]" +
-                $"scale={W}:{H}:force_original_aspect_ratio=increase," +
-                $"crop={W}:{H}," +
-                $"format=rgba,setsar=1," +
-                $"fps=30,setpts=PTS-STARTPTS[hero];" +
+            if (overlayMeta.Width == W && overlayMeta.Height == H)
+            {
+                filter =
+                    $"[0:v]" +
+                    $"scale={W}:{H}:force_original_aspect_ratio=increase," +
+                    $"crop={W}:{H}," +
+                    $"format=rgba,setsar=1[bg];" +
 
-                $"[bg][hero]overlay=0:0:format=auto:shortest=1[outv];" +
-                $"[outv]format=yuv420p[v]";
+                    $"[1:v]" +
+                    $"format=rgba,setsar=1," +
+                    $"fps=30,setpts=PTS-STARTPTS[hero];" +
+
+                    $"[bg][hero]overlay=0:0:format=auto:shortest=1[outv];" +
+                    $"[outv]format=yuv420p[v]";
+            }
+            else
+            {
+                filter =
+                    $"[0:v]" +
+                    $"scale={W}:{H}:force_original_aspect_ratio=increase," +
+                    $"crop={W}:{H}," +
+                    $"format=rgba,setsar=1[bg];" +
+
+                    $"[1:v]" +
+                    $"scale={W}:{H}:force_original_aspect_ratio=increase," +
+                    $"crop={W}:{H}," +
+                    $"format=rgba,setsar=1," +
+                    $"fps=30,setpts=PTS-STARTPTS[hero];" +
+
+                    $"[bg][hero]overlay=0:0:format=auto:shortest=1[outv];" +
+                    $"[outv]format=yuv420p[v]";
+            }
 
             var args =
                 $"-y -hide_banner " +
                 $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
-                $"-c:v libvpx-vp9 -i \"{overlayPath}\" " +
+                $"-i \"{overlayPath}\" " +
                 $"-t {dur} " +
                 $"-filter_complex \"{filter}\" " +
                 $"-map \"[v]\" " +
                 $"-r 30 -an " +
-                $"-c:v libx264 -preset veryfast -crf 20 " +
+                $"-c:v libx264 -preset ultrafast -crf 23 " +
                 $"-pix_fmt yuv420p -movflags +faststart " +
                 $"\"{tempPath}\"";
 
@@ -84,7 +115,18 @@ namespace XFrame.API.Services
 
             using var proc = new Process { StartInfo = psi };
 
-            try { proc.Start(); }
+            try
+            {
+                proc.Start();
+
+                try
+                {
+                    proc.PriorityClass = ProcessPriorityClass.BelowNormal;
+                }
+                catch
+                {
+                }
+            }
             catch (Exception ex)
             {
                 throw new Exception($"Ne mogu pokrenuti ffmpeg. Je li u PATH-u? Error: {ex.Message}");
@@ -132,9 +174,32 @@ namespace XFrame.API.Services
             return finalPath;
         }
 
-        private static async Task<double> ProbeDurationSecondsAsync(string path)
+        private async Task<OverlayMetadata> GetOverlayMetadataAsync(string overlayPath)
         {
-            var args = $"-v error -show_format -of json \"{path}\"";
+            var cached = _cachedOverlayMetadata;
+            if (cached != null && string.Equals(cached.Path, overlayPath, StringComparison.OrdinalIgnoreCase))
+                return cached;
+
+            await _overlayMetadataLock.WaitAsync();
+            try
+            {
+                cached = _cachedOverlayMetadata;
+                if (cached != null && string.Equals(cached.Path, overlayPath, StringComparison.OrdinalIgnoreCase))
+                    return cached;
+
+                var meta = await ProbeOverlayMetadataAsync(overlayPath);
+                _cachedOverlayMetadata = meta;
+                return meta;
+            }
+            finally
+            {
+                _overlayMetadataLock.Release();
+            }
+        }
+
+        private static async Task<OverlayMetadata> ProbeOverlayMetadataAsync(string path)
+        {
+            var args = $"-v error -show_streams -show_format -of json \"{path}\"";
 
             var psi = new ProcessStartInfo
             {
@@ -148,7 +213,18 @@ namespace XFrame.API.Services
 
             using var proc = new Process { StartInfo = psi };
 
-            try { proc.Start(); }
+            try
+            {
+                proc.Start();
+
+                try
+                {
+                    proc.PriorityClass = ProcessPriorityClass.BelowNormal;
+                }
+                catch
+                {
+                }
+            }
             catch (Exception ex)
             {
                 throw new Exception($"Ne mogu pokrenuti ffprobe. Je li u PATH-u? Error: {ex.Message}");
@@ -163,15 +239,47 @@ namespace XFrame.API.Services
 
             using var doc = JsonDocument.Parse(json);
 
+            double duration = 0;
+            int width = 0;
+            int height = 0;
+
             if (doc.RootElement.TryGetProperty("format", out var formatEl) &&
                 formatEl.TryGetProperty("duration", out var durEl))
             {
                 var durStr = durEl.GetString();
-                if (double.TryParse(durStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
-                    return d;
+                if (!string.IsNullOrWhiteSpace(durStr) &&
+                    double.TryParse(durStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+                {
+                    duration = d;
+                }
             }
 
-            return 0;
+            if (doc.RootElement.TryGetProperty("streams", out var streamsEl) &&
+                streamsEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var streamEl in streamsEl.EnumerateArray())
+                {
+                    if (streamEl.TryGetProperty("codec_type", out var codecTypeEl) &&
+                        string.Equals(codecTypeEl.GetString(), "video", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (streamEl.TryGetProperty("width", out var widthEl) && widthEl.TryGetInt32(out var w))
+                            width = w;
+
+                        if (streamEl.TryGetProperty("height", out var heightEl) && heightEl.TryGetInt32(out var h))
+                            height = h;
+
+                        break;
+                    }
+                }
+            }
+
+            return new OverlayMetadata
+            {
+                Path = path,
+                DurationSeconds = duration,
+                Width = width,
+                Height = height
+            };
         }
 
         private static async Task<string> SafeTask(Task<string> t)

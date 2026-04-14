@@ -1,0 +1,218 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.api\\services\\videocomposerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|solutionrelative:xframe.api\\services\\videocomposerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.api\\services\\herorenderqueue.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|solutionrelative:xframe.api\\services\\herorenderqueue.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.device\\wwwroot\\js\\camera.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|solutionrelative:xframe.device\\wwwroot\\js\\camera.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.api\\controllers\\sessioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|solutionrelative:xframe.api\\controllers\\sessioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|solutionrelative:xframe.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.device\\components\\pages\\device.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|solutionrelative:xframe.device\\components\\pages\\device.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.device\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|solutionrelative:xframe.device\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{76F85530-D483-4D7C-9112-AFE4051BC88B}|XFrame.Landing\\XFrame.Landing.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.landing\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{76F85530-D483-4D7C-9112-AFE4051BC88B}|XFrame.Landing\\XFrame.Landing.csproj|solutionrelative:xframe.landing\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{2D7F7856-31E4-471E-980B-0F837D9C8DDD}|XFrame.API\\XFrame.API.csproj|solutionrelative:xframe.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|c:\\users\\ante\\downloads\\xframep\\xframep\\xframe.device\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{DFB756BA-0CC8-49AA-9DAE-6A28D74F7C59}|XFrame.Device\\XFrame.Device.csproj|solutionrelative:xframe.device\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 100,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 7,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\Program.cs",
+              "RelativeDocumentMoniker": "XFrame.Device\\Program.cs",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\Program.cs",
+              "RelativeToolTip": "XFrame.Device\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T10:46:14.628Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Landing\\Program.cs",
+              "RelativeDocumentMoniker": "XFrame.Landing\\Program.cs",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Landing\\Program.cs",
+              "RelativeToolTip": "XFrame.Landing\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T10:45:15.829Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Device.razor",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\Components\\Pages\\Device.razor",
+              "RelativeDocumentMoniker": "XFrame.Device\\Components\\Pages\\Device.razor",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\Components\\Pages\\Device.razor",
+              "RelativeToolTip": "XFrame.Device\\Components\\Pages\\Device.razor",
+              "ViewState": "AgIAACcAAAAAAAAAAAAuwDoAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:44:56.011Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Program.cs",
+              "RelativeDocumentMoniker": "XFrame.API\\Program.cs",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Program.cs",
+              "RelativeToolTip": "XFrame.API\\Program.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAuwDoAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T10:30:23.659Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "camera.js",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\wwwroot\\js\\camera.js",
+              "RelativeDocumentMoniker": "XFrame.Device\\wwwroot\\js\\camera.js",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\wwwroot\\js\\camera.js",
+              "RelativeToolTip": "XFrame.Device\\wwwroot\\js\\camera.js",
+              "ViewState": "AgIAALMCAAAAAAAAAAAuwOsCAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-04-14T10:25:58.648Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "VideoComposerService.cs",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Services\\VideoComposerService.cs",
+              "RelativeDocumentMoniker": "XFrame.API\\Services\\VideoComposerService.cs",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Services\\VideoComposerService.cs",
+              "RelativeToolTip": "XFrame.API\\Services\\VideoComposerService.cs",
+              "ViewState": "AgIAAEkAAAAAAAAAAAAewGUAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T10:20:55.399Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HeroRenderQueue.cs",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Services\\HeroRenderQueue.cs",
+              "RelativeDocumentMoniker": "XFrame.API\\Services\\HeroRenderQueue.cs",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Services\\HeroRenderQueue.cs",
+              "RelativeToolTip": "XFrame.API\\Services\\HeroRenderQueue.cs",
+              "ViewState": "AgIAALoAAAAAAAAAAAAqwPEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T10:20:35.81Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SessionController.cs",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Controllers\\SessionController.cs",
+              "RelativeDocumentMoniker": "XFrame.API\\Controllers\\SessionController.cs",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\Controllers\\SessionController.cs",
+              "RelativeToolTip": "XFrame.API\\Controllers\\SessionController.cs",
+              "ViewState": "AgIAAGMAAAAAAAAAAAAqwJoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T10:20:21.299Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\appsettings.json",
+              "RelativeDocumentMoniker": "XFrame.API\\appsettings.json",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.API\\appsettings.json",
+              "RelativeToolTip": "XFrame.API\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-14T08:33:54.015Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "XFrame.Device\\Properties\\launchSettings.json",
+              "ToolTip": "C:\\Users\\Ante\\Downloads\\XFrameP\\XFrameP\\XFrame.Device\\Properties\\launchSettings.json",
+              "RelativeToolTip": "XFrame.Device\\Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-14T08:31:09.932Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e5c86464-96be-4d7c-9a8b-abcb3bbf5f92}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{7f075f9f-1e1a-4ee8-9ce8-b8451fb61ec8}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{56df62a4-05a3-4e5b-aa1a-99371ccfb997}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/css/*",
+      "/js/*",
+      "/_framework/*",
+      "/*.png",
+      "/*.jpg",
+      "/*.jpeg",
+      "/*.gif",
+      "/*.svg",
+      "/*.webm",
+      "/*.mp4",
+      "/*.ico",
+      "/appsettings.json",
+      "/appsettings.Production.json"
+    ]
+  }
+}

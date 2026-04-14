@@ -82,6 +82,12 @@
                 _lastHandledEmail = string.Empty;
             }
 
+            // Ako je email obrisan nakon obrade, resetiraj guard da isti email može opet triggerati novi flow
+            if (string.IsNullOrWhiteSpace(email) && _lastHandledSessionId == activeId)
+            {
+                _lastHandledEmail = string.Empty;
+            }
+
             // Triggeraj flow samo kad se pojavi NOVI email event
             // (novi session ili isti session ali novi email payload)
             if (!string.IsNullOrWhiteSpace(email) &&
