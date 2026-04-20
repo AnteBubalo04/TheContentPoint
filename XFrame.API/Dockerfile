@@ -2,10 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY XFrame.API/*.csproj ./XFrame.API/
+# Copy entire repo
+COPY . .
+
+# Restore
 RUN dotnet restore XFrame.API/XFrame.API.csproj
 
-COPY . .
+# Publish
 RUN dotnet publish XFrame.API/XFrame.API.csproj -c Release -o /app/publish
 
 # Runtime stage
