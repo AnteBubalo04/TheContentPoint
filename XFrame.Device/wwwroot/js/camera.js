@@ -31,11 +31,20 @@
     let pendingHeroRequest = null;
     let captureInFlight = false;
 
+    let configuredApiBaseUrl = "";
+
+    async function loadClientConfig() {
+        try {
+            const res = await fetch("/appsettings.json", { cache: "no-store" });
+            const cfg = await res.json();
+            configuredApiBaseUrl = (cfg.ApiBaseUrl || "").replace(/\/+$/, "");
+        } catch {
+            configuredApiBaseUrl = "";
+        }
+    }
+
     function getApiBaseUrl() {
-        const host = window.location.hostname || "localhost";
-        return window.location.protocol === "https:"
-            ? `https://${host}:5001`
-            : `http://${host}:5000`;
+        return configuredApiBaseUrl;
     }
 
     function stopAll() {
@@ -728,6 +737,7 @@
     };
 
     async function boot() {
+        await loadClientConfig();
         ensureOverlayAndQR();
 
         const t0 = performance.now();
