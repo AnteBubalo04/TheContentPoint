@@ -10,6 +10,9 @@ WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y ffmpeg \
+    && which ffmpeg \
+    && which ffprobe \
+    && ffprobe -version \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish .
