@@ -1,4 +1,4 @@
-﻿using XFrame.API.Models;
+using XFrame.API.Models;
 using XFrame.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,10 +32,19 @@ var app = builder.Build();
 
 app.UseCors();
 
+app.UseSwagger();
+app.UseSwaggerUI();
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
-
+// ✅ JEDINA PROMJENA (ROOT ENDPOINT)
+app.MapGet("/", () =>
+{
+    return Results.Ok(new
+    {
+        service = "XFrame.API",
+        status = "running",
+        swagger = "/swagger/index.html"
+    });
+});
 
 app.UseAuthorization();
 
