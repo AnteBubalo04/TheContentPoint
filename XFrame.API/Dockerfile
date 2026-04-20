@@ -1,22 +1,20 @@
-# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy entire repo
 COPY . .
+RUN dotnet restore ./XFrame.API/XFrame.API.csproj
+RUN dotnet publish ./XFrame.API/XFrame.API.csproj -c Release -o /app/publish /p:UseAppHost=false
 
-# Restore
-RUN dotnet restore XFrame.API/XFrame.API.csproj
-
-# Publish
-RUN dotnet publish XFrame.API/XFrame.API.csproj -c Release -o /app/publish
-
-# Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
-EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "XFrame.API.dll"]
