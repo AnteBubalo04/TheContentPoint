@@ -53,46 +53,18 @@ namespace XFrame.RenderWorker.Services
 
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
 
-            string filter;
-
-            if (overlayMeta.Width == W && overlayMeta.Height == H)
-            {
-                filter =
-                    $"[0:v]" +
-                    $"scale={W}:{H}:force_original_aspect_ratio=increase," +
-                    $"crop={W}:{H}," +
-                    $"format=rgba,setsar=1[bg];" +
-
-                    $"[1:v]" +
-                    $"format=rgba,setsar=1," +
-                    $"fps=30,setpts=PTS-STARTPTS[hero];" +
-
-                    $"[bg][hero]overlay=0:0:format=auto:shortest=1[outv];" +
-                    $"[outv]format=yuv420p[v]";
-            }
-            else
-            {
-                filter =
-                    $"[0:v]" +
-                    $"scale={W}:{H}:force_original_aspect_ratio=increase," +
-                    $"crop={W}:{H}," +
-                    $"format=rgba,setsar=1[bg];" +
-
-                    $"[1:v]" +
-                    $"scale={W}:{H}:force_original_aspect_ratio=increase," +
-                    $"crop={W}:{H}," +
-                    $"format=rgba,setsar=1," +
-                    $"fps=30,setpts=PTS-STARTPTS[hero];" +
-
-                    $"[bg][hero]overlay=0:0:format=auto:shortest=1[outv];" +
-                    $"[outv]format=yuv420p[v]";
-            }
+            // TEST MODE:
+            // Render only the captured photo into an MP4, without overlay2.
+            var filter =
+                $"[0:v]" +
+                $"scale={W}:{H}:force_original_aspect_ratio=increase," +
+                $"crop={W}:{H}," +
+                $"format=yuv420p[v]";
 
             var args =
                 $"-y -hide_banner -loglevel warning " +
                 $"-threads 1 -filter_threads 1 -filter_complex_threads 1 " +
                 $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
-                $"-i \"{overlayPath}\" " +
                 $"-t {dur} " +
                 $"-filter_complex \"{filter}\" " +
                 $"-map \"[v]\" " +
