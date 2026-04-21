@@ -52,7 +52,7 @@ namespace XFrame.RenderWorker.Services
                 throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
 
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
-
+            // TEST TOUCH: no functional change, only to force a Git-visible edit.
             // TEST MODE:
             // Render only the captured photo into an MP4, without overlay2.
             var filter =
