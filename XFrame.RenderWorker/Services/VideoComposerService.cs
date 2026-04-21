@@ -28,7 +28,6 @@ namespace XFrame.RenderWorker.Services
 
         public async Task<string> CreateHeroVideoFromPhotoAsync(string photoPath, string outputDir)
         {
-            throw new Exception("TEST_MARKER_WORKER_NEW_CODE");
 
             if (!File.Exists(photoPath))
                 throw new ArgumentException("Photo does not exist.", nameof(photoPath));
