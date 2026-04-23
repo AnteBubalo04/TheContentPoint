@@ -47,6 +47,13 @@ namespace XFrame.RenderWorker.Services
             const int W = 1080;
             const int H = 1920;
 
+            // camera.js mapping:
+            // left: 51%, top: 44%, width: 67vw, height: 74vh, transform: translate(-50%, -50%) scaleX(-1)
+            const int PHOTO_W = 724;
+            const int PHOTO_H = 1421;
+            const int PHOTO_X = 189;
+            const int PHOTO_Y = 134;
+
             var overlayMeta = await GetOverlayMetadataAsync(overlayPath);
             if (overlayMeta.DurationSeconds <= 0.1)
                 throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
@@ -54,12 +61,14 @@ namespace XFrame.RenderWorker.Services
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
 
             var filter =
+                $"color=c=black:s={W}x{H}:d={dur}[base];" +
                 $"[0:v]" +
-                $"scale={W}:{H}:force_original_aspect_ratio=increase," +
-                $"crop={W}:{H}," +
-                $"format=rgba[bg];" +
+                $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
+                $"crop={PHOTO_W}:{PHOTO_H}," +
+                $"hflip," +
+                $"format=rgba[photo];" +
+                $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
                 $"[1:v]" +
-                $"scale={W}:{H}," +
                 $"format=rgba[ov];" +
                 $"[bg][ov]overlay=0:0:format=auto," +
                 $"format=yuv420p[v]";
