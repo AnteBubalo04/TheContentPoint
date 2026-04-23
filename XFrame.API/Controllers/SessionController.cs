@@ -14,20 +14,14 @@ namespace XFrame.API.Controllers
         private static readonly object _activeLock = new();
 
         private readonly IWebHostEnvironment _env;
-        private readonly EmailService _emailService;
-        private readonly VideoComposerService _videoComposer;
-        private readonly IHeroRenderQueue _heroRenderQueue;
+        private readonly RenderDispatchService _renderDispatchService;
 
         public SessionController(
             IWebHostEnvironment env,
-            EmailService emailService,
-            VideoComposerService videoComposer,
-            IHeroRenderQueue heroRenderQueue)
+            RenderDispatchService renderDispatchService)
         {
             _env = env;
-            _emailService = emailService;
-            _videoComposer = videoComposer;
-            _heroRenderQueue = heroRenderQueue;
+            _renderDispatchService = renderDispatchService;
         }
 
         private void NoCache()
@@ -100,14 +94,19 @@ namespace XFrame.API.Controllers
         }
 
         [HttpPost("{id}/photo")]
+        [RequestSizeLimit(20 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 20 * 1024 * 1024)]
         public async Task<IActionResult> UploadPhoto(string id, IFormFile photo)
         {
+            string? photoPath = null;
+            var deleteLocalPhotoAfterDispatch = false;
+
             try
             {
                 NoCache();
 
                 Console.WriteLine($"[API] UploadPhoto START za session {id}");
-                Console.WriteLine($"[API] photo = {(photo == null ? "null" : $"{photo.FileName}, {photo.Length} bytes")}");
+                Console.WriteLine($"[API] photo = {(photo == null ? "null" : $"{photo.FileName}, {photo.Length} bytes, {photo.ContentType}")}");
 
                 if (!_sessions.TryGetValue(id, out var email) || string.IsNullOrWhiteSpace(email))
                     return BadRequest("Session ne postoji ili email nije unesen.");
@@ -115,30 +114,51 @@ namespace XFrame.API.Controllers
                 if (photo == null || photo.Length == 0)
                     return BadRequest("Slika nije primljena.");
 
+                if (photo.Length > 20 * 1024 * 1024)
+                    return BadRequest("Slika je prevelika.");
+
+                var allowedContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/webp"
+                };
+
+                if (!allowedContentTypes.Contains(photo.ContentType ?? string.Empty))
+                    return BadRequest("Nepodrzan format slike.");
+
                 var generatedRoot = Path.Combine(_env.ContentRootPath, "Generated");
                 var photosDir = Path.Combine(generatedRoot, "photos");
-                var videosDir = Path.Combine(generatedRoot, "videos");
                 Directory.CreateDirectory(photosDir);
-                Directory.CreateDirectory(videosDir);
 
-                var photoPath = Path.Combine(
+                var extension = ".jpg";
+                if (string.Equals(photo.ContentType, "image/png", StringComparison.OrdinalIgnoreCase))
+                    extension = ".png";
+                else if (string.Equals(photo.ContentType, "image/webp", StringComparison.OrdinalIgnoreCase))
+                    extension = ".webp";
+
+                photoPath = Path.Combine(
                     photosDir,
-                    $"{id}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.jpg"
+                    $"{id}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}{extension}"
                 );
 
                 await using (var stream = System.IO.File.Create(photoPath))
                     await photo.CopyToAsync(stream);
 
                 Console.WriteLine($"[API] Slika spremljena u: {photoPath}");
-                Console.WriteLine("[API] Queueing hero render job (photo + overlay2 alpha)...");
+                Console.WriteLine("[API] Dispatching render job to XFrame.RenderWorker...");
 
-                await _heroRenderQueue.EnqueueAsync(new HeroRenderJob(
+                await _renderDispatchService.DispatchAsync(
                     id,
                     email,
-                    photoPath
-                ));
+                    photoPath,
+                    photo.ContentType,
+                    HttpContext.RequestAborted);
 
-                Console.WriteLine($"[API] Hero render job queued za session {id} i email {email}");
+                deleteLocalPhotoAfterDispatch = true;
+
+                Console.WriteLine($"[API] Render job uspjesno dispatchan za session {id} i email {email}");
 
                 _sessions[id] = "";
                 Console.WriteLine($"[API] Session {id} ociscen za sljedeceg korisnika.");
@@ -149,6 +169,20 @@ namespace XFrame.API.Controllers
             {
                 Console.WriteLine("[API] UploadPhoto ERROR: " + ex);
                 return StatusCode(500, $"UploadPhoto exception: {ex.Message}");
+            }
+            finally
+            {
+                if (deleteLocalPhotoAfterDispatch && !string.IsNullOrWhiteSpace(photoPath))
+                {
+                    try
+                    {
+                        if (System.IO.File.Exists(photoPath))
+                            System.IO.File.Delete(photoPath);
+                    }
+                    catch
+                    {
+                    }
+                }
             }
         }
     }

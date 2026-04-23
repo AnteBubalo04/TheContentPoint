@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<WebRoot>wwwroot</WebRoot>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Generated\photos\" />
+		<Folder Include="Generated\videos\" />
+		<Folder Include="wwwroot\" />
+		<Folder Include="Models\" />
+		<Folder Include="Services\" />
+		<Folder Include="Controllers\" />
+	</ItemGroup>
+
+</Project>
