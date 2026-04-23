@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -28,7 +28,6 @@ namespace XFrame.RenderWorker.Services
 
         public async Task<string> CreateHeroVideoFromPhotoAsync(string photoPath, string outputDir)
         {
-
             if (!File.Exists(photoPath))
                 throw new ArgumentException("Photo does not exist.", nameof(photoPath));
 
@@ -53,15 +52,14 @@ namespace XFrame.RenderWorker.Services
                 throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
 
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
-            // TEST TOUCH: no functional change, only to force a Git-visible edit.
-            // TEST MODE:
-            // Render only the captured photo into an MP4, without overlay2.
+
             var filter =
                 $"[0:v]" +
                 $"scale={W}:{H}:force_original_aspect_ratio=increase," +
                 $"crop={W}:{H}," +
                 $"format=rgba[bg];" +
                 $"[1:v]" +
+                $"scale={W}:{H}," +
                 $"format=rgba[ov];" +
                 $"[bg][ov]overlay=0:0:format=auto," +
                 $"format=yuv420p[v]";
