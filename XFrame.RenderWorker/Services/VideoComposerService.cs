@@ -58,7 +58,8 @@ namespace XFrame.RenderWorker.Services
             if (overlayMeta.DurationSeconds <= 0.1)
                 throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
 
-            var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
+         var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
+
 var filter =
     $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
     $"[0:v]" +
@@ -69,25 +70,23 @@ var filter =
     $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
     $"[1:v]" +
     $"scale={W}:{H}," +
-    $"format=yuva420p," +
-    $"setparams=alpha_mode=straight[ov];" +
-    $"[bg][ov]overlay=0:0:alpha=straight:format=auto," +
+    $"format=rgba[ov];" +
+    $"[bg][ov]overlay=0:0:format=auto," +
     $"format=yuv420p[v]";
 
-            var args =
-                $"-y -hide_banner -loglevel warning " +
-                $"-threads 1 -filter_threads 1 -filter_complex_threads 1 " +
-                $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
-                $"-i \"{overlayPath}\" " +
-                $"-t {dur} " +
-                $"-filter_complex \"{filter}\" " +
-                $"-map \"[v]\" " +
-                $"-r 30 -an " +
-                $"-c:v libx264 -preset ultrafast -crf 23 " +
-                $"-pix_fmt yuv420p -movflags +faststart " +
-                $"-max_muxing_queue_size 256 " +
-                $"\"{tempPath}\"";
-
+var args =
+    $"-y -hide_banner -loglevel warning " +
+    $"-threads 1 -filter_threads 1 -filter_complex_threads 1 " +
+    $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
+    $"-i \"{overlayPath}\" " +
+    $"-t {dur} " +
+    $"-filter_complex \"{filter}\" " +
+    $"-map \"[v]\" " +
+    $"-r 30 -an " +
+    $"-c:v libx264 -preset ultrafast -crf 23 " +
+    $"-pix_fmt yuv420p -movflags +faststart " +
+    $"-max_muxing_queue_size 256 " +
+    $"\"{tempPath}\"";
             var psi = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
