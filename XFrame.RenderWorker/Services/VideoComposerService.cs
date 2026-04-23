@@ -60,12 +60,17 @@ namespace XFrame.RenderWorker.Services
                 $"[0:v]" +
                 $"scale={W}:{H}:force_original_aspect_ratio=increase," +
                 $"crop={W}:{H}," +
+                $"format=rgba[bg];" +
+                $"[1:v]" +
+                $"format=rgba[ov];" +
+                $"[bg][ov]overlay=0:0:format=auto," +
                 $"format=yuv420p[v]";
 
             var args =
                 $"-y -hide_banner -loglevel warning " +
                 $"-threads 1 -filter_threads 1 -filter_complex_threads 1 " +
                 $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
+                $"-i \"{overlayPath}\" " +
                 $"-t {dur} " +
                 $"-filter_complex \"{filter}\" " +
                 $"-map \"[v]\" " +

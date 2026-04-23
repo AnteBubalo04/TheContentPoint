@@ -1,0 +1,66 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "XFrame.RenderWorker",
+    "version": "1.0"
+  },
+  "paths": {
+    "/internal/render-jobs": {
+      "post": {
+        "tags": [
+          "InternalRender"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "sessionId": {
+                  "style": "form"
+                },
+                "email": {
+                  "style": "form"
+                },
+                "photo": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "XFrame.RenderWorker"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": { }
+}
