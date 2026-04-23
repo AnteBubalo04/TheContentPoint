@@ -59,8 +59,7 @@ namespace XFrame.RenderWorker.Services
                 throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
 
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
-
-            var filter =
+var filter =
     $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
     $"[0:v]" +
     $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
