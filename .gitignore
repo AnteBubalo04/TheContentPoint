@@ -10,3 +10,6 @@
 "Generated/" 
 "*.mp4" 
 "*.jpg" 
+.vs/
+**/bin/
+**/obj/
