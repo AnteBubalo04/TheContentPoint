@@ -61,7 +61,7 @@ namespace XFrame.RenderWorker.Services
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
 
             var filter =
-                $"color=c=black:s={W}x{H}:d={dur}[base];" +
+                $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
                 $"[0:v]" +
                 $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
                 $"crop={PHOTO_W}:{PHOTO_H}," +
@@ -69,6 +69,7 @@ namespace XFrame.RenderWorker.Services
                 $"format=rgba[photo];" +
                 $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
                 $"[1:v]" +
+                $"scale={W}:{H}:force_original_aspect_ratio=fill," +
                 $"format=rgba[ov];" +
                 $"[bg][ov]overlay=0:0:format=auto," +
                 $"format=yuv420p[v]";
