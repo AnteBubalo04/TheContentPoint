@@ -69,7 +69,7 @@ namespace XFrame.RenderWorker.Services
                 $"format=rgba[photo];" +
                 $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
                 $"[1:v]" +
-                $"scale={W}:{H}:force_original_aspect_ratio=fill," +
+                $"scale={W}:{H}," +
                 $"format=rgba[ov];" +
                 $"[bg][ov]overlay=0:0:format=auto," +
                 $"format=yuv420p[v]";
