@@ -1,5 +1,4 @@
-﻿(() => {
-    const KEY = "__XFRAME_DEVICE_SINGLETON__";
+﻿    const KEY = "__XFRAME_DEVICE_SINGLETON__";
     const prev = window[KEY];
     if (prev && typeof prev.stop === "function") {
         try { prev.stop(); } catch { }
@@ -369,6 +368,15 @@
             cameraVideo.srcObject = null;
             cameraVideo.style.opacity = "1";
             cameraVideo.style.transition = "none";
+            cameraVideo.style.left = "50.8%";
+            cameraVideo.style.top = "44%";
+            cameraVideo.style.width = "67vw";
+            cameraVideo.style.height = "74vh";
+            cameraVideo.style.transform = "translate(-50%, -50%) scaleX(-1)";
+            cameraVideo.style.objectFit = "cover";
+            cameraVideo.style.background = "#000";
+            cameraVideo.style.webkitMaskImage = "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.78) 7%, rgba(0,0,0,1) 13%, rgba(0,0,0,1) 84%, rgba(0,0,0,0.82) 92%, rgba(0,0,0,0) 100%)";
+            cameraVideo.style.maskImage = "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.78) 7%, rgba(0,0,0,1) 13%, rgba(0,0,0,1) 84%, rgba(0,0,0,0.82) 92%, rgba(0,0,0,0) 100%)";
         }
 
         if (!overlayLoopVideo) {
@@ -755,4 +763,3 @@
     }
 
     window.addEventListener("load", boot);
-})();
