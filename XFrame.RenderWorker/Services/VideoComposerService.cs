@@ -31,9 +31,9 @@ namespace XFrame.RenderWorker.Services
             if (!File.Exists(photoPath))
                 throw new ArgumentException("Photo does not exist.", nameof(photoPath));
 
-            var overlayPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "overlay2.webm");
+            var overlayPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "overlay2.mov");
             if (!File.Exists(overlayPath))
-                throw new ArgumentException($"overlay2.webm not found: {overlayPath}");
+                throw new ArgumentException($"overlay2.mov not found: {overlayPath}");
 
             Directory.CreateDirectory(outputDir);
 
