@@ -61,18 +61,19 @@ namespace XFrame.RenderWorker.Services
             var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
 
             var filter =
-                $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
-                $"[0:v]" +
-                $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
-                $"crop={PHOTO_W}:{PHOTO_H}," +
-                $"hflip," +
-                $"format=rgba[photo];" +
-                $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
-                $"[1:v]" +
-                $"scale={W}:{H}," +
-                $"format=rgba[ov];" +
-                $"[bg][ov]overlay=0:0:format=auto," +
-                $"format=yuv420p[v]";
+    $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
+    $"[0:v]" +
+    $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
+    $"crop={PHOTO_W}:{PHOTO_H}," +
+    $"hflip," +
+    $"format=rgba[photo];" +
+    $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
+    $"[1:v]" +
+    $"scale={W}:{H}," +
+    $"format=yuva420p," +
+    $"setparams=alpha_mode=straight[ov];" +
+    $"[bg][ov]overlay=0:0:alpha=straight:format=auto," +
+    $"format=yuv420p[v]";
 
             var args =
                 $"-y -hide_banner -loglevel warning " +
