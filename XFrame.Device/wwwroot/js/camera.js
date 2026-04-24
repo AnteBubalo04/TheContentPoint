@@ -500,16 +500,50 @@
         }).catch(() => { });
     }
 
-    async function capturePhotoBlobFast() {
-        if (imageCapture && typeof imageCapture.takePhoto === "function") {
-            try {
-                const blob = await imageCapture.takePhoto();
-                if (blob && blob.size > 0) {
-                    return blob;
-                }
-            } catch {
-            }
-        }
+   function applyVerticalEdgeFade(targetCtx, w, h) {
+    const fadeH = Math.round(h * 0.18); // prilagodi ako treba
+
+    targetCtx.save();
+    targetCtx.globalCompositeOperation = "destination-in";
+
+    const mask = targetCtx.createLinearGradient(0, 0, 0, h);
+    mask.addColorStop(0, "rgba(0,0,0,0)");
+    mask.addColorStop(0.18, "rgba(0,0,0,1)");
+    mask.addColorStop(0.82, "rgba(0,0,0,1)");
+    mask.addColorStop(1, "rgba(0,0,0,0)");
+
+    targetCtx.fillStyle = mask;
+    targetCtx.fillRect(0, 0, w, h);
+    targetCtx.restore();
+}
+
+async function capturePhotoBlobFast() {
+    if (!cameraVideo) return null;
+
+    // Mora biti isti aspect/crop kao prikaz na deviceu: object-fit: cover na 100vw/100vh
+    const outW = window.innerWidth;
+    const outH = window.innerHeight;
+
+    const snap = document.createElement("canvas");
+    snap.width = outW;
+    snap.height = outH;
+
+    const sctx = snap.getContext("2d", { alpha: true });
+    if (!sctx) return null;
+
+    try {
+        sctx.clearRect(0, 0, outW, outH);
+        drawVideoCover(sctx, cameraVideo, 0, 0, outW, outH);
+        applyVerticalEdgeFade(sctx, outW, outH);
+    } catch {
+        return null;
+    }
+
+    // PNG zadržava transparentni fade. JPG ne može imati transparentne rubove.
+    return await new Promise(resolve => {
+        snap.toBlob(blob => resolve(blob || null), "image/png");
+    });
+}
 
         if (!cameraVideo) return null;
 
