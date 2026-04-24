@@ -491,7 +491,7 @@
         if (flowId !== currentFlowId) return;
 
         const fd = new FormData();
-        fd.append("photo", blob, `${sessionId}.jpg`);
+        fd.append("photo", blob, `${sessionId}.png`);
 
         fetch(`${getApiBaseUrl()}/api/session/${sessionId}/photo`, {
             method: "POST",
