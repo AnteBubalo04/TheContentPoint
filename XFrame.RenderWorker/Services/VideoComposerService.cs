@@ -62,16 +62,20 @@ namespace XFrame.RenderWorker.Services
 
 var filter =
     $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
+
     $"[0:v]" +
     $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
     $"crop={PHOTO_W}:{PHOTO_H}," +
     $"hflip," +
     $"format=rgba[photo];" +
+
     $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
+
     $"[1:v]" +
-    $"scale={W}:{H}," +
-    $"format=rgba[ov];" +
-    $"[bg][ov]overlay=0:0:format=auto," +
+    $"scale={W}:{H}:flags=lanczos," +
+    $"format=yuva444p[ov];" +
+
+    $"[bg][ov]overlay=0:0:format=auto:alpha=premultiplied," +
     $"format=yuv420p[v]";
 
 var args =
