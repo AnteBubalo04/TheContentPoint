@@ -47,8 +47,6 @@ namespace XFrame.RenderWorker.Services
             const int W = 1080;
             const int H = 1920;
 
-            // camera.js mapping:
-            // left: 51%, top: 44%, width: 67vw, height: 74vh, transform: translate(-50%, -50%) scaleX(-1)
             const int PHOTO_W = 724;
             const int PHOTO_H = 1421;
             const int PHOTO_X = 189;
@@ -58,39 +56,40 @@ namespace XFrame.RenderWorker.Services
             if (overlayMeta.DurationSeconds <= 0.1)
                 throw new Exception($"Overlay duration invalid: {overlayMeta.DurationSeconds}");
 
-         var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
+            var dur = overlayMeta.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture);
 
-var filter =
-    $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
+            var filter =
+                $"color=c=black@0.0:s={W}x{H}:d={dur},format=rgba[base];" +
 
-    $"[0:v]" +
-    $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
-    $"crop={PHOTO_W}:{PHOTO_H}," +
-    $"hflip," +
-    $"format=rgba[photo];" +
+                $"[0:v]" +
+                $"scale={PHOTO_W}:{PHOTO_H}:force_original_aspect_ratio=increase," +
+                $"crop={PHOTO_W}:{PHOTO_H}," +
+                $"hflip," +
+                $"format=rgba[photo];" +
 
-    $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
+                $"[base][photo]overlay={PHOTO_X}:{PHOTO_Y}:format=auto[bg];" +
 
-    $"[1:v]" +
-    $"scale={W}:{H}:flags=lanczos," +
-    $"format=yuva444p[ov];" +
+                $"[1:v]" +
+                $"scale={W}:{H}:flags=lanczos," +
+                $"format=rgba[ov];" +
 
-    $"[bg][ov]overlay=0:0:format=auto:alpha=premultiplied," +
-    $"format=yuv420p[v]";
+                $"[bg][ov]overlay=0:0:format=auto," +
+                $"format=yuv420p[v]";
 
-var args =
-    $"-y -hide_banner -loglevel warning " +
-    $"-threads 1 -filter_threads 1 -filter_complex_threads 1 " +
-    $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
-    $"-i \"{overlayPath}\" " +
-    $"-t {dur} " +
-    $"-filter_complex \"{filter}\" " +
-    $"-map \"[v]\" " +
-    $"-r 30 -an " +
-    $"-c:v libx264 -preset ultrafast -crf 23 " +
-    $"-pix_fmt yuv420p -movflags +faststart " +
-    $"-max_muxing_queue_size 256 " +
-    $"\"{tempPath}\"";
+            var args =
+                $"-y -hide_banner -loglevel warning " +
+                $"-threads 1 -filter_threads 1 -filter_complex_threads 1 " +
+                $"-loop 1 -framerate 30 -i \"{photoPath}\" " +
+                $"-c:v libvpx-vp9 -i \"{overlayPath}\" " +
+                $"-t {dur} " +
+                $"-filter_complex \"{filter}\" " +
+                $"-map \"[v]\" " +
+                $"-r 30 -an " +
+                $"-c:v libx264 -preset ultrafast -crf 23 " +
+                $"-pix_fmt yuv420p -movflags +faststart " +
+                $"-max_muxing_queue_size 256 " +
+                $"\"{tempPath}\"";
+
             var psi = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
