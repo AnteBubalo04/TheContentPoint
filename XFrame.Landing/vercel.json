@@ -4,4 +4,12 @@
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/index.html" }
   ]
+  {
+  "rewrites": [
+    {
+      "source": "/landing/:path*",
+      "destination": "/landing/index.html"
+    }
+  ]
+}
 }
