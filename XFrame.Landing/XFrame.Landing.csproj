@@ -3,6 +3,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<OutputType>Exe</OutputType>
 		<RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+		<EmccMaximumHeapSize>134217728</EmccMaximumHeapSize>
 	</PropertyGroup>
 
 	<ItemGroup>
