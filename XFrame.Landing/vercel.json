@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir $HOME/.dotnet",
+  "buildCommand": "export PATH=\"$HOME/.dotnet:$PATH\" && dotnet publish XFrame.Landing.csproj -c Release -o dist",
+  "outputDirectory": "dist/wwwroot",
   "routes": [
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/index.html" }
