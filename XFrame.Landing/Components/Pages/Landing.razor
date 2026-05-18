@@ -31,10 +31,10 @@ else
         public string Email { get; set; } = string.Empty;
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await RefreshActiveSessionId();
-    }
+   protected override Task OnInitializedAsync()
+{
+    return Task.CompletedTask;
+}
 
     private async Task RefreshActiveSessionId()
     {
