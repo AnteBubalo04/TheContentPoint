@@ -6,6 +6,7 @@ using System.Net.Http;
 using XFrame.Landing.Components;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
@@ -13,7 +14,7 @@ var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
 
 if (string.IsNullOrWhiteSpace(apiBaseUrl))
 {
-    throw new InvalidOperationException("ApiBaseUrl is missing. Check wwwroot/appsettings.json.");
+    apiBaseUrl = "https://xframe-api.onrender.com/";
 }
 
 if (!apiBaseUrl.EndsWith("/"))
