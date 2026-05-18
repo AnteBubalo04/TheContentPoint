@@ -6,11 +6,11 @@
   "outputDirectory": "dist/wwwroot",
   "rewrites": [
     {
-      "source": "/landing",
+      "source": "/",
       "destination": "/index.html"
     },
     {
-      "source": "/",
+      "source": "/landing",
       "destination": "/index.html"
     }
   ]
