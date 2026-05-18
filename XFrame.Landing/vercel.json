@@ -4,6 +4,44 @@
   "installCommand": "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir $HOME/.dotnet",
   "buildCommand": "export PATH=\"$HOME/.dotnet:$PATH\" && dotnet publish XFrame.Landing.csproj -c Release -o dist",
   "outputDirectory": "dist/wwwroot",
+  "headers": [
+    {
+      "source": "/_framework/(.*).wasm",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/wasm"
+        }
+      ]
+    },
+    {
+      "source": "/_framework/(.*).dll",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        }
+      ]
+    },
+    {
+      "source": "/_framework/(.*).json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "source": "/_framework/(.*).dat",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/",
